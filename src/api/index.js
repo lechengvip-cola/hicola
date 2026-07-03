@@ -73,3 +73,17 @@ export const getOtherWeather = async () => {
   const res = await fetch("https://api.oioweb.cn/api/weather/GetWeather");
   return await res.json();
 };
+
+// 根据访问 IP 获取大致城市与经纬度
+export const getIpLocation = async () => {
+  const res = await fetch("https://ipwho.is/");
+  return await res.json();
+};
+
+// 通过经纬度获取实时天气，无需 API Key
+export const getOpenMeteoWeather = async (latitude, longitude) => {
+  const res = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_direction_10m,wind_speed_10m&timezone=auto`,
+  );
+  return await res.json();
+};

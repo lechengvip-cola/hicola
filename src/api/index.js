@@ -1,11 +1,5 @@
-// import axios from "axios";
 import fetchJsonp from "fetch-jsonp";
 
-/**
- * 音乐播放器
- */
-
-// 获取音乐播放列表
 export const getPlayerList = async (server, type, id) => {
   const res = await fetch(
     `${import.meta.env.VITE_SONG_API}?server=${server}&type=${type}&id=${id}`,
@@ -28,38 +22,27 @@ export const getPlayerList = async (server, type, id) => {
       cover: v.cover || v.pic,
       lrc: v.lrc,
     }));
-  } else {
-    return data.map((v) => ({
-      name: v.name || v.title,
-      artist: v.artist || v.author,
-      url: v.url,
-      cover: v.cover || v.pic,
-      lrc: v.lrc,
-    }));
   }
+
+  return data.map((v) => ({
+    name: v.name || v.title,
+    artist: v.artist || v.author,
+    url: v.url,
+    cover: v.cover || v.pic,
+    lrc: v.lrc,
+  }));
 };
 
-/**
- * 一言
- */
-
-// 获取一言数据
 export const getHitokoto = async () => {
   const res = await fetch("https://v1.hitokoto.cn");
   return await res.json();
 };
 
-/**
- * 天气
- */
-
-// 获取高德地理位置信息
 export const getAdcode = async (key) => {
   const res = await fetch(`https://restapi.amap.com/v3/ip?key=${key}`);
   return await res.json();
 };
 
-// 获取高德地理天气信息
 export const getWeather = async (key, city) => {
   const res = await fetch(
     `https://restapi.amap.com/v3/weather/weatherInfo?key=${key}&city=${city}`,
@@ -67,20 +50,31 @@ export const getWeather = async (key, city) => {
   return await res.json();
 };
 
-// 获取教书先生天气 API
-// https://api.oioweb.cn/doc/weather/GetWeather
 export const getOtherWeather = async () => {
   const res = await fetch("https://api.oioweb.cn/api/weather/GetWeather");
   return await res.json();
 };
 
-// 根据访问 IP 获取大致城市与经纬度
 export const getIpLocation = async () => {
-  const res = await fetch("https://ipwho.is/");
+  const res = await fetch("https://ipwho.is/?lang=zh-CN");
   return await res.json();
 };
 
-// 通过经纬度获取实时天气，无需 API Key
+export const getCipLocation = async () => {
+  const res = await fetch("/api/ip-location");
+  if (!res.ok) throw new Error("cip.cc 定位不可用");
+  return await res.json();
+};
+
+export const getGeoByCity = async (city) => {
+  const res = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+      city,
+    )}&count=1&language=zh&format=json`,
+  );
+  return await res.json();
+};
+
 export const getOpenMeteoWeather = async (latitude, longitude) => {
   const res = await fetch(
     `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,wind_direction_10m,wind_speed_10m&timezone=auto`,

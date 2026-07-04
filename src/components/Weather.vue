@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { getAdcode, getCipLocation, getGeoByCity, getIpLocation, getOpenMeteoWeather, getWeather } from "@/api";
+import { getAdcode, getCipLocation, getIpLocation, getOpenMeteoWeather, getWeather } from "@/api";
 
 const mainKey = import.meta.env.VITE_WEATHER_KEY;
 const cityText = ref("定位中");
@@ -66,66 +66,41 @@ const compactCityName = (location) => {
   return String(city).replace(/市$/, "");
 };
 
-const getCipInfo = async () => {
-  const cip = await getCipLocation();
-  if (!cip.ok || !cip.cityName) return null;
-  return {
-    city: cip.cityName,
-  };
-};
+const getFastGeo = async () => {
+  const edge = await getCipLocation();
+  if (edge.ok && edge.latitude && edge.longitude) {
+    return {
+      city: edge.cityName || "当前位置",
+      latitude: edge.latitude,
+      longitude: edge.longitude,
+    };
+  }
 
-const getCityGeo = async (cityName) => {
-  const geoQueryMap = {
-    东京: "Tokyo",
-  };
-  const geo = await getGeoByCity(geoQueryMap[cityName] || cityName);
-  const city = geo.results?.[0];
-  if (!city) return null;
-  return {
-    city: cityName,
-    latitude: city.latitude,
-    longitude: city.longitude,
-  };
-};
-
-const getFallbackGeo = async () => {
   const location = await getIpLocation();
   if (location.success === false || !location.latitude || !location.longitude) {
     throw new Error("IP 定位失败");
   }
   return {
-    city: compactCityName(location),
+    city: edge.cityName || compactCityName(location),
     latitude: location.latitude,
     longitude: location.longitude,
   };
 };
 
 const setOpenMeteoWeather = async () => {
-  let cipInfo = null;
-  let geo = null;
-
-  try {
-    cipInfo = await getCipInfo();
-    if (cipInfo?.city) geo = await getCityGeo(cipInfo.city);
-  } catch (error) {
-    console.warn("cip.cc 定位不可用，已切换备用 IP 定位", error);
-  }
-
-  if (!geo) {
-    geo = await getFallbackGeo();
-    if (cipInfo?.city) geo.city = cipInfo.city;
-  }
-
+  const geo = await getFastGeo();
   const result = await getOpenMeteoWeather(geo.latitude, geo.longitude);
   const current = result.current;
-  if (!current) throw new Error("天气数据为空");
+  if (!result.ok || !current) throw new Error("天气数据为空");
 
   const weather = weatherMap[current.weather_code] || { text: "天气", kind: "cloudy" };
-  weatherKind.value = weather.kind;
+  weatherKind.value = current.weather_kind || weather.kind;
   cityText.value = geo.city;
-  detailText.value = `${weather.text} ${Math.round(current.temperature_2m)}℃ ${windDirection(
-    current.wind_direction_10m,
-  )} ${Math.round(current.wind_speed_10m)}km/h`;
+  detailText.value = `${current.weather_text || weather.text} ${Math.round(
+    current.temperature_2m,
+  )}℃ ${current.wind_direction_label || windDirection(current.wind_direction_10m)} ${Math.round(
+    current.wind_speed_10m,
+  )}km/h`;
 };
 
 const setAmapWeather = async () => {

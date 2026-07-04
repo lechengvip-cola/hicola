@@ -6,6 +6,16 @@ const pickLineValue = (text, label) => {
 
 const cleanLocation = (value) => value.split("|")[0].replace(/\s+/g, " ").trim();
 
+const normalizeCityName = (city) => {
+  if (!city) return "";
+  const fixed = {
+    东京都: "东京",
+    Singapore: "新加坡",
+    Tokyo: "东京",
+  };
+  return fixed[city] || city.replace(/省|市|自治区|特别行政区|地区|盟|都$/g, "");
+};
+
 const extractCityName = (locationText) => {
   if (!locationText) return "";
   const parts = locationText
@@ -14,10 +24,31 @@ const extractCityName = (locationText) => {
     .map((item) => item.trim())
     .filter(Boolean);
 
-  if (parts.length >= 3 && parts[0] === "中国") return parts[2];
-  const city = parts[parts.length - 1] || "";
-  if (city === "东京都") return "东京";
-  return city.replace(/都$/, "");
+  if (parts.length >= 3 && parts[0] === "中国") return normalizeCityName(parts[2]);
+  return normalizeCityName(parts[parts.length - 1] || "");
+};
+
+const timeout = (ms) =>
+  new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("cip.cc timeout")), ms);
+  });
+
+const getCipLocation = async (ip) => {
+  const url = ip ? `https://www.cip.cc/${encodeURIComponent(ip)}` : "https://www.cip.cc/";
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "curl/8.0",
+    },
+  });
+  const text = await response.text();
+  const address = cleanLocation(pickLineValue(text, "地址"));
+  const dataTwo = cleanLocation(pickLineValue(text, "数据二"));
+  const locationText = address || dataTwo;
+  return {
+    source: "cip.cc",
+    locationText,
+    cityName: extractCityName(locationText),
+  };
 };
 
 export async function onRequest({ request }) {
@@ -25,50 +56,45 @@ export async function onRequest({ request }) {
     request.headers.get("CF-Connecting-IP") ||
     request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
     "";
+  const cf = request.cf || {};
+  const edgeLocation = {
+    source: "cloudflare",
+    cityName: normalizeCityName(cf.city || ""),
+    region: cf.region || "",
+    country: cf.country || "",
+    latitude: cf.latitude ? Number(cf.latitude) : null,
+    longitude: cf.longitude ? Number(cf.longitude) : null,
+    timezone: cf.timezone || "",
+  };
 
-  const url = ip ? `https://www.cip.cc/${encodeURIComponent(ip)}` : "https://www.cip.cc/";
-
+  let cipLocation = null;
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "curl/8.0",
-      },
-    });
-    const text = await response.text();
-    const address = cleanLocation(pickLineValue(text, "地址"));
-    const dataTwo = cleanLocation(pickLineValue(text, "数据二"));
-    const locationText = address || dataTwo;
-
-    return new Response(
-      JSON.stringify({
-        ok: Boolean(locationText),
-        source: "cip.cc",
-        ip,
-        locationText,
-        cityName: extractCityName(locationText),
-      }),
-      {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
-      },
-    );
+    cipLocation = await Promise.race([getCipLocation(ip), timeout(900)]);
   } catch (error) {
-    return new Response(
-      JSON.stringify({
-        ok: false,
-        source: "cip.cc",
-        ip,
-        message: error.message,
-      }),
-      {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
-      },
-    );
+    cipLocation = {
+      source: "cip.cc",
+      error: error.message,
+    };
   }
+
+  return new Response(
+    JSON.stringify({
+      ok: Boolean(edgeLocation.latitude && edgeLocation.longitude),
+      ip,
+      source: "cloudflare+cip.cc",
+      cityName: cipLocation?.cityName || edgeLocation.cityName || edgeLocation.region || edgeLocation.country,
+      locationText: cipLocation?.locationText || "",
+      latitude: edgeLocation.latitude,
+      longitude: edgeLocation.longitude,
+      timezone: edgeLocation.timezone,
+      edge: edgeLocation,
+      cip: cipLocation,
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    },
+  );
 }

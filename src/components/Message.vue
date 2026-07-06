@@ -1,11 +1,14 @@
 <template>
   <div class="message">
-    <div class="logo">
-      <AnalogClock />
-      <div :class="{ name: true, 'text-hidden': true, long: siteUrl[0].length >= 6 }">
+    <Teleport to="body">
+      <div :class="{ brand: true, 'text-hidden': true, long: siteUrl[0].length >= 6 }">
         <span class="bg">{{ siteUrl[0] }}</span>
         <span class="sm">.{{ siteUrl[1] }}</span>
       </div>
+    </Teleport>
+
+    <div class="logo">
+      <AnalogClock />
     </div>
 
     <div class="description cards" @click="changeBox">
@@ -81,45 +84,96 @@ watch(
 </script>
 
 <style lang="scss" scoped>
+:global(body > .brand) {
+  position: fixed;
+  left: clamp(28px, 5vw, 72px);
+  top: clamp(24px, 5vh, 56px);
+  z-index: 2;
+  max-width: min(42vw, 360px);
+  font-family: "Pacifico-Regular", cursive;
+  animation: fade 0.5s;
+  text-shadow: 0 8px 22px #00000030;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #fff;
+}
+
+:global(body > .brand .bg) {
+  font-size: clamp(3rem, 5vw, 4.6rem);
+  line-height: 1;
+}
+
+:global(body > .brand .sm) {
+  margin-left: 6px;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+@media (max-width: 720px) {
+  :global(body > .brand) {
+    position: fixed;
+    left: 20px;
+    top: 18px;
+    max-width: calc(100vw - 40px);
+  }
+
+  :global(body > .brand .bg) {
+    font-size: 3.2rem;
+  }
+
+  :global(body > .brand .sm) {
+    font-size: 1.3rem;
+  }
+}
+
 .message {
+  .brand {
+    position: fixed;
+    left: clamp(28px, 5vw, 72px);
+    top: clamp(24px, 5vh, 56px);
+    z-index: 2;
+    max-width: min(42vw, 360px);
+    font-family: "Pacifico-Regular", cursive;
+    animation: fade 0.5s;
+    text-shadow: 0 8px 22px #00000030;
+
+    .bg {
+      font-size: clamp(3rem, 5vw, 4.6rem);
+      line-height: 1;
+    }
+
+    .sm {
+      margin-left: 6px;
+      font-size: clamp(1.25rem, 2vw, 1.75rem);
+    }
+
+    @media (max-width: 720px) {
+      position: relative;
+      left: auto;
+      top: auto;
+      max-width: 100%;
+      margin-bottom: 1.5rem;
+      text-align: center;
+
+      .bg {
+        font-size: 3.4rem;
+      }
+
+      .sm {
+        font-size: 1.35rem;
+      }
+    }
+  }
+
   .logo {
     display: flex;
     flex-direction: row;
     align-items: center;
     animation: fade 0.5s;
-    max-width: 500px;
-
-    .name {
-      width: 100%;
-      padding-left: 22px;
-      transform: translateY(-8px);
-      font-family: "Pacifico-Regular", cursive;
-
-      .bg {
-        font-size: 5rem;
-      }
-
-      .sm {
-        margin-left: 6px;
-        font-size: 2rem;
-
-        @media (min-width: 721px) and (max-width: 789px) {
-          display: none;
-        }
-      }
-    }
-
-    @media (max-width: 768px) {
-      .name {
-        height: 128px;
-
-        .bg {
-          font-size: 4.5rem;
-        }
-      }
-    }
+    max-width: 160px;
 
     @media (max-width: 720px) {
+      justify-content: center;
       max-width: 100%;
     }
   }

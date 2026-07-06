@@ -5,9 +5,6 @@
         <span class="bg">{{ siteUrl[0] }}</span>
         <span class="sm">.{{ siteUrl[1] }}</span>
       </div>
-      <div class="clock-anchor">
-        <AnalogClock />
-      </div>
     </Teleport>
 
     <div class="description cards" @click="changeBox">
@@ -33,7 +30,6 @@
 import { Icon } from "@vicons/utils";
 import { QuoteLeft, QuoteRight } from "@vicons/fa";
 import { Error } from "@icon-park/vue-next";
-import AnalogClock from "@/components/AnalogClock.vue";
 import { mainStore } from "@/store";
 
 const store = mainStore();
@@ -108,14 +104,6 @@ watch(
   font-size: clamp(1.25rem, 2vw, 1.75rem);
 }
 
-:global(body > .clock-anchor) {
-  position: fixed;
-  left: clamp(28px, 5vw, 72px);
-  top: clamp(104px, 13vh, 142px);
-  z-index: 2;
-  animation: fade 0.5s;
-}
-
 @media (max-width: 720px) {
   :global(body > .brand) {
     position: fixed;
@@ -130,10 +118,6 @@ watch(
 
   :global(body > .brand .sm) {
     font-size: 1.3rem;
-  }
-
-  :global(body > .clock-anchor) {
-    display: none;
   }
 }
 
@@ -177,6 +161,7 @@ watch(
   }
 
   .description {
+    display: none;
     width: min(76%, 420px);
     padding: 0.85rem 1rem;
     margin-top: 8.5rem;
@@ -209,6 +194,7 @@ watch(
     }
 
     @media (max-width: 720px) {
+      display: block;
       width: min(86vw, 420px);
       max-width: none;
       margin: 46vh auto 0;

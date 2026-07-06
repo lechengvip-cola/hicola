@@ -76,7 +76,7 @@ const jumpLink = (data) => {
 
 <style lang="scss" scoped>
 .links {
-  margin-top: 2rem;
+  margin-top: 1.25rem;
 
   .swiper {
     left: -10px;

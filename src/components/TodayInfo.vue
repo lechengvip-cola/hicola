@@ -69,9 +69,7 @@ const solarTerms2026 = {
 };
 
 const pad = (value) => String(value).padStart(2, "0");
-
 const dateKey = (date) => `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
 const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 const dayOfYear = (date) => {
@@ -83,6 +81,8 @@ const weekOfYear = (date) => {
   const start = new Date(date.getFullYear(), 0, 1);
   return Math.ceil((dayOfYear(date) + start.getDay()) / 7);
 };
+
+const weekParity = (week) => (week % 2 === 0 ? "双周" : "单周");
 
 const daysUntil = (from, monthDay) => {
   const [month, day] = monthDay.split("-").map(Number);
@@ -106,12 +106,14 @@ const nextSpecialDay = computed(() => {
     .sort((a, b) => a.days - b.days)[0];
 });
 
+const currentWeek = computed(() => weekOfYear(now.value));
 const titleText = computed(() => todayName.value || `今年第 ${dayOfYear(now.value)} 天`);
 
 const metaText = computed(() => {
-  if (todayName.value) return `今天是 ${todayName.value}`;
-  if (nextSpecialDay.value) return `第 ${weekOfYear(now.value)} 周 · 距离${nextSpecialDay.value.name} ${nextSpecialDay.value.days} 天`;
-  return `第 ${weekOfYear(now.value)} 周 · 平凡的一天也值得记录`;
+  const weekText = `第 ${currentWeek.value} 周 · ${weekParity(currentWeek.value)}`;
+  if (todayName.value) return `${weekText} · 今天是 ${todayName.value}`;
+  if (nextSpecialDay.value) return `${weekText} · 距离${nextSpecialDay.value.name} ${nextSpecialDay.value.days} 天`;
+  return `${weekText} · 平凡的一天也值得记录`;
 });
 
 const tipText = computed(() => `${now.value.getFullYear()} 年今日信息`);
@@ -199,7 +201,6 @@ onBeforeUnmount(() => {
   top: calc(50% - 4px);
   width: 8px;
   height: 8px;
-  background: #ffffff;
 }
 
 .today-copy {
@@ -212,7 +213,7 @@ onBeforeUnmount(() => {
 
 .title,
 .meta {
-  max-width: 190px;
+  max-width: 210px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

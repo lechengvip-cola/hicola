@@ -20,7 +20,7 @@
               <span>{{ currentTime.hour }}:{{ currentTime.minute }}:{{ currentTime.second }}</span>
             </div>
           </div>
-          <Weather />
+          <TodayInfo />
           <div class="mobile-music">
             <Music v-if="playerHasId && isMobile" />
           </div>
@@ -35,7 +35,7 @@ import { getCurrentTime } from "@/utils/getTime";
 import { mainStore } from "@/store";
 import Music from "@/components/Music.vue";
 import Hitokoto from "@/components/Hitokoto.vue";
-import Weather from "@/components/Weather.vue";
+import TodayInfo from "@/components/TodayInfo.vue";
 
 const store = mainStore();
 const currentTime = ref({});

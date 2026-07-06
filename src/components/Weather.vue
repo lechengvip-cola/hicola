@@ -1,5 +1,5 @@
 <template>
-  <div class="weather-card" :class="weatherClass">
+  <div class="weather-card" :class="weatherClass" :title="locationTip">
     <div class="weather-icon" aria-hidden="true">
       <span class="sun-core" />
       <span class="sun-ray r1" />
@@ -24,11 +24,12 @@
 </template>
 
 <script setup>
-import { getAdcode, getCipLocation, getIpLocation, getOpenMeteoWeather, getWeather } from "@/api";
+import { getAdcode, getIpLocation, getOpenMeteoWeather, getWeather } from "@/api";
 
 const mainKey = import.meta.env.VITE_WEATHER_KEY;
 const cityText = ref("定位中");
 const detailText = ref("天气加载中");
+const locationTip = ref("正在获取位置");
 const weatherKind = ref("cloudy");
 
 const weatherMap = {
@@ -61,46 +62,54 @@ const windDirection = (degree) => {
   return dirs[Math.round(Number(degree) / 45) % 8];
 };
 
-const compactCityName = (location) => {
-  const city = location.city || location.region || location.country || "当前位置";
-  return String(city).replace(/市$/, "");
+const normalizeCity = (city) => {
+  if (!city) return "当前位置";
+  const value = String(city).trim();
+  const cityMap = {
+    Chengdu: "成都",
+    "Chengdu City": "成都",
+    "Hong Kong": "香港",
+    HongKong: "香港",
+    Guangzhou: "广州",
+    Shenzhen: "深圳",
+    Beijing: "北京",
+    Shanghai: "上海",
+    Singapore: "新加坡",
+    Tokyo: "东京",
+    "Tokyo Metropolis": "东京",
+    "东京都": "东京",
+  };
+
+  return (cityMap[value] || value).replace(/省|市|自治区|特别行政区|地区|盟$/g, "");
 };
 
-const getFastGeo = async () => {
-  const edge = await getCipLocation();
-  if (edge.ok && edge.latitude && edge.longitude) {
-    return {
-      city: edge.cityName || "当前位置",
-      latitude: edge.latitude,
-      longitude: edge.longitude,
-    };
-  }
-
+const getGeo = async () => {
   const location = await getIpLocation();
-  if (location.success === false || !location.latitude || !location.longitude) {
+  if (!location.latitude || !location.longitude) {
     throw new Error("IP 定位失败");
   }
   return {
-    city: edge.cityName || compactCityName(location),
+    city: normalizeCity(location.cityName),
     latitude: location.latitude,
     longitude: location.longitude,
+    source: location.source || "IP 定位",
   };
 };
 
 const setOpenMeteoWeather = async () => {
-  const geo = await getFastGeo();
+  const geo = await getGeo();
   const result = await getOpenMeteoWeather(geo.latitude, geo.longitude);
   const current = result.current;
   if (!result.ok || !current) throw new Error("天气数据为空");
 
   const weather = weatherMap[current.weather_code] || { text: "天气", kind: "cloudy" };
+  const windText = current.wind_direction_label || windDirection(current.wind_direction_10m);
   weatherKind.value = current.weather_kind || weather.kind;
   cityText.value = geo.city;
+  locationTip.value = `${geo.source}，如有偏差可刷新或切换网络后重试`;
   detailText.value = `${current.weather_text || weather.text} ${Math.round(
     current.temperature_2m,
-  )}℃ ${current.wind_direction_label || windDirection(current.wind_direction_10m)} ${Math.round(
-    current.wind_speed_10m,
-  )}km/h`;
+  )}℃${windText ? ` ${windText}` : ""}`;
 };
 
 const setAmapWeather = async () => {
@@ -123,8 +132,9 @@ const setAmapWeather = async () => {
             : "cloudy";
   const wind = live.winddirection?.endsWith("风") ? live.winddirection : `${live.winddirection}风`;
   weatherKind.value = kind;
-  cityText.value = adCode.city || "当前位置";
-  detailText.value = `${text} ${live.temperature}℃ ${wind} ${live.windpower}级`;
+  cityText.value = normalizeCity(adCode.city);
+  locationTip.value = "高德 IP 定位";
+  detailText.value = `${text} ${live.temperature}℃ ${wind}`;
 };
 
 const getWeatherData = async () => {
@@ -138,6 +148,7 @@ const getWeatherData = async () => {
     console.error("天气信息获取失败:", error);
     cityText.value = "当前位置";
     detailText.value = "天气暂不可用";
+    locationTip.value = "定位或天气服务暂不可用";
     weatherKind.value = "cloudy";
   }
 };
@@ -159,6 +170,7 @@ onMounted(() => {
   color: #efefef;
   text-shadow: 0 0 5px #00000050;
   overflow: hidden;
+  font-family: "HarmonyOS_Regular", sans-serif;
 
   .weather-icon {
     position: relative;
@@ -174,6 +186,7 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
     line-height: 1.25;
+    font-family: "HarmonyOS_Regular", sans-serif;
   }
 
   .city,
@@ -182,17 +195,18 @@ onMounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: "HarmonyOS_Regular", sans-serif;
   }
 
   .city {
     font-size: 0.92rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .meta {
     margin-top: 2px;
     font-size: 0.78rem;
-    opacity: 0.86;
+    opacity: 0.9;
   }
 }
 

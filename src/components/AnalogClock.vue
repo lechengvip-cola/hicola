@@ -11,27 +11,28 @@
 </template>
 
 <script setup>
-const now = ref(new Date());
+const elapsedSeconds = ref(0);
 let timer = null;
+let startTimestamp = 0;
+let startSeconds = 0;
 
-const hourDeg = computed(() => {
-  const hours = now.value.getHours() % 12;
-  const minutes = now.value.getMinutes();
-  return hours * 30 + minutes * 0.5;
-});
+const getSecondsSinceMidnight = (date) =>
+  date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds() + date.getMilliseconds() / 1000;
 
-const minuteDeg = computed(() => {
-  const minutes = now.value.getMinutes();
-  const seconds = now.value.getSeconds();
-  return minutes * 6 + seconds * 0.1;
-});
+const updateElapsedSeconds = () => {
+  elapsedSeconds.value = startSeconds + (Date.now() - startTimestamp) / 1000;
+};
 
-const secondDeg = computed(() => now.value.getSeconds() * 6);
+const hourDeg = computed(() => elapsedSeconds.value / 120);
+const minuteDeg = computed(() => elapsedSeconds.value * 0.1);
+const secondDeg = computed(() => elapsedSeconds.value * 6);
 
 onMounted(() => {
-  timer = window.setInterval(() => {
-    now.value = new Date();
-  }, 1000);
+  const now = new Date();
+  startTimestamp = Date.now();
+  startSeconds = getSecondsSinceMidnight(now);
+  updateElapsedSeconds();
+  timer = window.setInterval(updateElapsedSeconds, 500);
 });
 
 onBeforeUnmount(() => {
@@ -83,7 +84,7 @@ onBeforeUnmount(() => {
   width: 4px;
   border-radius: 999px;
   transform-origin: 50% 100%;
-  transition: transform 0.24s ease-out;
+  transition: transform 0.45s linear;
 }
 
 .hour {

@@ -5,11 +5,12 @@
         <span class="bg">{{ siteUrl[0] }}</span>
         <span class="sm">.{{ siteUrl[1] }}</span>
       </div>
+      <div class="clock-anchor">
+        <AnalogClock />
+      </div>
     </Teleport>
 
-    <div class="logo">
-      <AnalogClock />
-    </div>
+    <div class="logo-spacer" />
 
     <div class="description cards" @click="changeBox">
       <div class="content">
@@ -126,6 +127,56 @@ watch(
   }
 }
 
+:global(body > .clock-anchor) {
+  position: fixed;
+  left: clamp(34px, 5.2vw, 76px);
+  top: clamp(118px, 17vh, 150px);
+  z-index: 2;
+  width: 96px;
+  height: 96px;
+  animation: fade 0.5s;
+}
+
+:global(body > .clock-anchor .analog-clock) {
+  width: 96px;
+  height: 96px;
+  padding: 7px;
+}
+
+:global(body > .clock-anchor .tick) {
+  transform-origin: 1px 37px;
+}
+
+:global(body > .clock-anchor .hour) {
+  height: 22px;
+}
+
+:global(body > .clock-anchor .minute) {
+  height: 30px;
+}
+
+:global(body > .clock-anchor .second) {
+  height: 34px;
+}
+
+@media (max-width: 720px) {
+  :global(body > .clock-anchor) {
+    left: 22px;
+    top: 92px;
+    width: 86px;
+    height: 86px;
+  }
+
+  :global(body > .clock-anchor .analog-clock) {
+    width: 86px;
+    height: 86px;
+  }
+
+  :global(body > .clock-anchor .tick) {
+    transform-origin: 1px 33px;
+  }
+}
+
 .message {
   .brand {
     position: fixed;
@@ -165,16 +216,11 @@ watch(
     }
   }
 
-  .logo {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    animation: fade 0.5s;
-    max-width: 160px;
+  .logo-spacer {
+    height: 120px;
 
     @media (max-width: 720px) {
-      justify-content: center;
-      max-width: 100%;
+      height: 116px;
     }
   }
 

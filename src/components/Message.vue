@@ -133,18 +133,14 @@ watch(
     .content {
       display: flex;
       justify-content: space-between;
+      font-family: "HarmonyOS_Regular", sans-serif;
 
       .text {
         margin: 0.75rem 1rem;
         line-height: 2rem;
         margin-right: auto;
         transition: opacity 0.2s;
-
-        p {
-          &:nth-of-type(1) {
-            font-family: "Pacifico-Regular", cursive;
-          }
-        }
+        font-family: "HarmonyOS_Regular", sans-serif;
       }
 
       .xicon:nth-of-type(2) {

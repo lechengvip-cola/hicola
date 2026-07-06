@@ -1,15 +1,15 @@
 <template>
-  <!-- 基本信息 -->
   <div class="message">
-    <!-- Logo -->
-    <div class="logo">
-      <img class="logo-img" :src="siteLogo" alt="logo" />
-      <div :class="{ name: true, 'text-hidden': true, long: siteUrl[0].length >= 6 }">
+    <Teleport to="body">
+      <div :class="{ brand: true, 'text-hidden': true, long: siteUrl[0].length >= 6 }">
         <span class="bg">{{ siteUrl[0] }}</span>
         <span class="sm">.{{ siteUrl[1] }}</span>
       </div>
-    </div>
-    <!-- 简介 -->
+      <div class="clock-anchor">
+        <AnalogClock />
+      </div>
+    </Teleport>
+
     <div class="description cards" @click="changeBox">
       <div class="content">
         <Icon size="16">
@@ -33,16 +33,14 @@
 import { Icon } from "@vicons/utils";
 import { QuoteLeft, QuoteRight } from "@vicons/fa";
 import { Error } from "@icon-park/vue-next";
+import AnalogClock from "@/components/AnalogClock.vue";
 import { mainStore } from "@/store";
+
 const store = mainStore();
 
-// 主页站点logo
-const siteLogo = import.meta.env.VITE_SITE_MAIN_LOGO;
-// 站点链接
 const siteUrl = computed(() => {
   const url = import.meta.env.VITE_SITE_URL;
   if (!url) return "imsyy.top".split(".");
-  // 判断协议前缀
   if (url.startsWith("http://") || url.startsWith("https://")) {
     const urlFormat = url.replace(/^(https?:\/\/)/, "");
     return urlFormat.split(".");
@@ -50,13 +48,11 @@ const siteUrl = computed(() => {
   return url.split(".");
 });
 
-// 简介区域文字
 const descriptionText = reactive({
   hello: import.meta.env.VITE_DESC_HELLO,
   text: import.meta.env.VITE_DESC_TEXT,
 });
 
-// 切换右侧功能区
 const changeBox = () => {
   if (store.getInnerWidth >= 721) {
     store.boxOpenState = !store.boxOpenState;
@@ -72,7 +68,6 @@ const changeBox = () => {
   }
 };
 
-// 监听状态变化
 watch(
   () => store.boxOpenState,
   (value) => {
@@ -88,72 +83,123 @@ watch(
 </script>
 
 <style lang="scss" scoped>
+:global(body > .brand) {
+  position: fixed;
+  left: clamp(28px, 5vw, 72px);
+  top: clamp(24px, 5vh, 56px);
+  z-index: 2;
+  max-width: min(42vw, 360px);
+  font-family: "Pacifico-Regular", cursive;
+  animation: fade 0.5s;
+  text-shadow: 0 8px 22px #00000030;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #fff;
+}
+
+:global(body > .brand .bg) {
+  font-size: clamp(3rem, 5vw, 4.6rem);
+  line-height: 1;
+}
+
+:global(body > .brand .sm) {
+  margin-left: 6px;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+:global(body > .clock-anchor) {
+  position: fixed;
+  left: clamp(28px, 5vw, 72px);
+  top: clamp(104px, 13vh, 142px);
+  z-index: 2;
+  animation: fade 0.5s;
+}
+
+@media (max-width: 720px) {
+  :global(body > .brand) {
+    position: fixed;
+    left: 20px;
+    top: 18px;
+    max-width: calc(100vw - 40px);
+  }
+
+  :global(body > .brand .bg) {
+    font-size: 3.2rem;
+  }
+
+  :global(body > .brand .sm) {
+    font-size: 1.3rem;
+  }
+
+  :global(body > .clock-anchor) {
+    display: none;
+  }
+}
+
 .message {
-  .logo {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+  .brand {
+    position: fixed;
+    left: clamp(28px, 5vw, 72px);
+    top: clamp(24px, 5vh, 56px);
+    z-index: 2;
+    max-width: min(42vw, 360px);
+    font-family: "Pacifico-Regular", cursive;
     animation: fade 0.5s;
-    max-width: 460px;
-    .logo-img {
-      border-radius: 50%;
-      width: 120px;
-    }
-    .name {
-      width: 100%;
-      padding-left: 22px;
-      transform: translateY(-8px);
-      font-family: "Pacifico-Regular";
+    text-shadow: 0 8px 22px #00000030;
 
-      .bg {
-        font-size: 5rem;
-      }
-
-      .sm {
-        margin-left: 6px;
-        font-size: 2rem;
-        @media (min-width: 721px) and (max-width: 789px) {
-          display: none;
-        }
-      }
+    .bg {
+      font-size: clamp(3rem, 5vw, 4.6rem);
+      line-height: 1;
     }
-    @media (max-width: 768px) {
-      .logo-img {
-        width: 100px;
-      }
-      .name {
-        height: 128px;
-        .bg {
-          font-size: 4.5rem;
-        }
-      }
+
+    .sm {
+      margin-left: 6px;
+      font-size: clamp(1.25rem, 2vw, 1.75rem);
     }
 
     @media (max-width: 720px) {
+      position: relative;
+      left: auto;
+      top: auto;
       max-width: 100%;
+      margin-bottom: 1.5rem;
+      text-align: center;
+
+      .bg {
+        font-size: 3.4rem;
+      }
+
+      .sm {
+        font-size: 1.35rem;
+      }
     }
   }
 
   .description {
-    padding: 1rem;
-    margin-top: 3.5rem;
-    max-width: 460px;
+    width: min(76%, 420px);
+    padding: 0.85rem 1rem;
+    margin-top: 8.5rem;
+    margin-left: auto;
+    margin-right: clamp(18px, 4vw, 70px);
     animation: fade 0.5s;
+    background-color: #00000022;
+    backdrop-filter: blur(12px);
 
     .content {
       display: flex;
       justify-content: space-between;
+      font-family: "HarmonyOS_Regular", sans-serif;
 
       .text {
-        margin: 0.75rem 1rem;
-        line-height: 2rem;
+        margin: 0.45rem 0.9rem;
+        line-height: 1.65rem;
         margin-right: auto;
         transition: opacity 0.2s;
+        font-family: "HarmonyOS_Regular", sans-serif;
 
         p {
-          &:nth-of-type(1) {
-            font-family: "Pacifico-Regular";
-          }
+          font-size: 0.92rem;
         }
       }
 
@@ -161,33 +207,25 @@ watch(
         align-self: flex-end;
       }
     }
+
     @media (max-width: 720px) {
-      max-width: 100%;
+      width: min(86vw, 420px);
+      max-width: none;
+      margin: 46vh auto 0;
+      padding: 0.85rem;
       pointer-events: none;
+
+      .content {
+        .text {
+          margin: 0.45rem 0.8rem;
+          line-height: 1.65rem;
+
+          p {
+            font-size: 0.9rem;
+          }
+        }
+      }
     }
   }
-  // @media (max-width: 390px) {
-  //   .logo {
-  //     flex-direction: column;
-  //     .logo-img {
-  //       display: none;
-  //     }
-  //     .name {
-  //       margin-left: 0;
-  //       height: auto;
-  //       transform: none;
-  //       text-align: center;
-  //       .bg {
-  //         font-size: 3.5rem;
-  //       }
-  //       .sm {
-  //         font-size: 1.4rem;
-  //       }
-  //     }
-  //   }
-  //   .description {
-  //     margin-top: 2.5rem;
-  //   }
-  // }
 }
 </style>

@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .env
+.wrangler-config/
+.wrangler-logs/
 
 # Editor directories and files
 .vscode/*

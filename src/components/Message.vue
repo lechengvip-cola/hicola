@@ -161,19 +161,7 @@ watch(
 
 @media (max-width: 720px) {
   :global(body > .clock-anchor) {
-    left: 22px;
-    top: 92px;
-    width: 86px;
-    height: 86px;
-  }
-
-  :global(body > .clock-anchor .analog-clock) {
-    width: 86px;
-    height: 86px;
-  }
-
-  :global(body > .clock-anchor .tick) {
-    transform-origin: 1px 33px;
+    display: none;
   }
 }
 
@@ -225,10 +213,13 @@ watch(
   }
 
   .description {
-    padding: 1rem;
-    margin-top: 3.5rem;
-    max-width: 460px;
+    padding: 0.9rem 1rem;
+    margin-top: 11rem;
+    margin-left: clamp(0px, 2vw, 34px);
+    max-width: 390px;
     animation: fade 0.5s;
+    background-color: #00000028;
+    backdrop-filter: blur(12px);
 
     .content {
       display: flex;
@@ -236,11 +227,15 @@ watch(
       font-family: "HarmonyOS_Regular", sans-serif;
 
       .text {
-        margin: 0.75rem 1rem;
-        line-height: 2rem;
+        margin: 0.45rem 0.9rem;
+        line-height: 1.65rem;
         margin-right: auto;
         transition: opacity 0.2s;
         font-family: "HarmonyOS_Regular", sans-serif;
+
+        p {
+          font-size: 0.92rem;
+        }
       }
 
       .xicon:nth-of-type(2) {
@@ -249,8 +244,22 @@ watch(
     }
 
     @media (max-width: 720px) {
-      max-width: 100%;
+      width: min(86vw, 420px);
+      max-width: none;
+      margin: 48vh auto 0;
+      padding: 0.85rem;
       pointer-events: none;
+
+      .content {
+        .text {
+          margin: 0.45rem 0.8rem;
+          line-height: 1.65rem;
+
+          p {
+            font-size: 0.9rem;
+          }
+        }
+      }
     }
   }
 }

@@ -5,6 +5,18 @@
       <span class="bg">{{ siteUrl[0] }}</span>
       <span class="sm">.{{ siteUrl[1] }}</span>
     </div>
+    <div class="tagline cards">
+      <Icon size="16" class="quote">
+        <QuoteLeft />
+      </Icon>
+      <div class="tagline-text">
+        <p>{{ descriptionText.hello }}</p>
+        <p>{{ descriptionText.text }}</p>
+      </div>
+      <Icon size="16" class="quote end">
+        <QuoteRight />
+      </Icon>
+    </div>
     <!-- 功能区 -->
     <Func />
     <!-- 网站链接 -->
@@ -14,9 +26,15 @@
 
 <script setup>
 import { mainStore } from "@/store";
+import { Icon } from "@vicons/utils";
+import { QuoteLeft, QuoteRight } from "@vicons/fa";
 import Func from "@/views/Func/index.vue";
 import Link from "@/components/Links.vue";
 const store = mainStore();
+const descriptionText = {
+  hello: import.meta.env.VITE_DESC_HELLO,
+  text: import.meta.env.VITE_DESC_TEXT,
+};
 
 // 站点链接
 const siteUrl = computed(() => {
@@ -36,6 +54,39 @@ const siteUrl = computed(() => {
   // flex: 1 0 0%;
   width: 50%;
   margin-left: 0.75rem;
+
+  .tagline {
+    min-height: 84px;
+    margin-bottom: 1.25rem;
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background-color: #00000022;
+    backdrop-filter: blur(12px);
+    animation: fade 0.5s;
+
+    .quote {
+      flex: 0 0 auto;
+      opacity: 0.92;
+    }
+
+    .end {
+      margin-left: auto;
+      align-self: flex-end;
+    }
+
+    .tagline-text {
+      min-width: 0;
+      line-height: 1.65;
+      font-family: "HarmonyOS_Regular", sans-serif;
+
+      p {
+        font-size: 0.92rem;
+      }
+    }
+  }
+
   .logo {
     width: 100%;
     font-family: "Pacifico-Regular";
@@ -63,6 +114,11 @@ const siteUrl = computed(() => {
   @media (max-width: 720px) {
     margin-left: 0;
     width: 100%;
+
+    .tagline {
+      display: none;
+    }
+
     &.hidden {
       display: none;
     }

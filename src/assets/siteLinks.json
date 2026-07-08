@@ -2,14 +2,14 @@
   {
     "icon": "Compass",
     "name": "飞机世界",
-    "description": "探索航空知识",
-    "link": "#"
+    "description": "查看实时航班动态",
+    "link": "https://www.flightradar24.com/"
   },
   {
     "icon": "Cloud",
-    "name": "航模记录",
-    "description": "我的模型与制作",
-    "link": "#"
+    "name": "飞机图片",
+    "description": "欣赏真实航空影像",
+    "link": "https://www.jetphotos.com/"
   },
   {
     "icon": "Blog",

@@ -25,9 +25,9 @@
   },
   {
     "icon": "Book",
-    "name": "学习资料",
-    "description": "知识整理与笔记",
-    "link": "#"
+    "name": "学习资源",
+    "description": "科学实验与数学工具",
+    "link": "/study.html"
   },
   {
     "icon": "LaptopCode",

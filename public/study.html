@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hi Cola - 学习资源</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        color: #fff;
+        font-family:
+          "HarmonyOS Sans SC",
+          "Microsoft YaHei",
+          system-ui,
+          sans-serif;
+        background:
+          linear-gradient(rgb(0 0 0 / 34%), rgb(0 0 0 / 42%)),
+          url("/images/background1.jpg") center / cover fixed;
+      }
+
+      main {
+        min-height: 100vh;
+        padding: clamp(28px, 6vw, 72px);
+        display: grid;
+        place-items: center;
+      }
+
+      .panel {
+        width: min(820px, 92vw);
+        padding: clamp(22px, 4vw, 38px);
+        border-radius: 8px;
+        background: rgb(0 0 0 / 26%);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 18px 50px rgb(0 0 0 / 24%);
+      }
+
+      .brand {
+        font-size: clamp(2.1rem, 6vw, 4rem);
+        line-height: 1;
+        font-family: cursive;
+        text-shadow: 0 8px 22px rgb(0 0 0 / 24%);
+      }
+
+      h1 {
+        margin-top: 22px;
+        font-size: clamp(1.35rem, 3vw, 2rem);
+        font-weight: 700;
+      }
+
+      .desc {
+        margin-top: 10px;
+        color: rgb(255 255 255 / 82%);
+        line-height: 1.7;
+      }
+
+      .links {
+        margin-top: 28px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      a {
+        min-height: 128px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        background: rgb(255 255 255 / 14%);
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease;
+      }
+
+      a:hover {
+        transform: translateY(-2px);
+        background: rgb(255 255 255 / 22%);
+      }
+
+      strong {
+        font-size: 1.18rem;
+      }
+
+      span {
+        margin-top: 8px;
+        color: rgb(255 255 255 / 78%);
+        line-height: 1.55;
+        font-size: 0.92rem;
+      }
+
+      .back {
+        display: inline-flex;
+        width: auto;
+        min-height: 0;
+        margin-top: 22px;
+        padding: 10px 14px;
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 640px) {
+        .links {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="panel">
+        <div class="brand">hicola.net</div>
+        <h1>学习资源</h1>
+        <p class="desc">用有趣的实验和直观的图形，把科学与数学变得更容易观察、理解和探索。</p>
+        <div class="links">
+          <a href="https://phet.colorado.edu/zh_CN/" target="_blank" rel="noopener noreferrer">
+            <strong>PhET 科学实验</strong>
+            <span>互动模拟物理、化学、数学等知识，适合边玩边学。</span>
+          </a>
+          <a href="https://www.geogebra.org/" target="_blank" rel="noopener noreferrer">
+            <strong>GeoGebra 数学工具</strong>
+            <span>绘制函数、几何图形与动态图像，帮助理解数学关系。</span>
+          </a>
+        </div>
+        <a class="back" href="/">返回首页</a>
+      </section>
+    </main>
+  </body>
+</html>

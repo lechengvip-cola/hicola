@@ -13,6 +13,10 @@
         <p>{{ descriptionText.hello }}</p>
         <p>{{ descriptionText.text }}</p>
       </div>
+      <button class="capsule-entry" type="button" @click="store.boxOpenState = true">
+        <HourglassFull theme="filled" size="16" fill="#fff" />
+        <span>时光胶囊</span>
+      </button>
       <Icon size="16" class="quote end">
         <QuoteRight />
       </Icon>
@@ -28,6 +32,7 @@
 import { mainStore } from "@/store";
 import { Icon } from "@vicons/utils";
 import { QuoteLeft, QuoteRight } from "@vicons/fa";
+import { HourglassFull } from "@icon-park/vue-next";
 import Func from "@/views/Func/index.vue";
 import Link from "@/components/Links.vue";
 const store = mainStore();
@@ -72,17 +77,45 @@ const siteUrl = computed(() => {
     }
 
     .end {
-      margin-left: auto;
       align-self: flex-end;
     }
 
     .tagline-text {
       min-width: 0;
+      flex: 1;
       line-height: 1.65;
       font-family: "HarmonyOS_Regular", sans-serif;
 
       p {
         font-size: 0.92rem;
+      }
+    }
+
+    .capsule-entry {
+      flex: 0 0 auto;
+      height: 34px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #fff;
+      font-family: "HarmonyOS_Regular", sans-serif;
+      font-size: 0.86rem;
+      background: rgb(255 255 255 / 15%);
+      cursor: pointer;
+      transition:
+        transform 0.2s,
+        background 0.2s;
+
+      &:hover {
+        transform: translateY(-1px);
+        background: rgb(255 255 255 / 24%);
+      }
+
+      &:active {
+        transform: scale(0.97);
       }
     }
   }

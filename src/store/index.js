@@ -25,6 +25,10 @@ export const mainStore = defineStore("main", {
       playerAutoplay: false, // 是否自动播放
       playerLoop: "all", // 循环播放 "all", "one", "none"
       playerOrder: "list", // 循环顺序 "list", "random"
+      winterVacationStart: "2026-01-20", // 寒假开始日期
+      winterVacationEnd: "2026-02-20", // 寒假结束日期
+      summerVacationStart: "2026-07-01", // 暑假开始日期
+      summerVacationEnd: "2026-08-31", // 暑假结束日期
     };
   },
   getters: {
@@ -88,6 +92,10 @@ export const mainStore = defineStore("main", {
       "playerAutoplay",
       "playerLoop",
       "playerOrder",
+      "winterVacationStart",
+      "winterVacationEnd",
+      "summerVacationStart",
+      "summerVacationEnd",
     ],
   },
 });

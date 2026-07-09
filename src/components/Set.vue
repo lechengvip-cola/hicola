@@ -80,7 +80,32 @@
         </div>
       </el-collapse-item>
       <el-collapse-item title="其他设置" name="4">
-        <div>设置内容待增加</div>
+        <div class="vacation-setting">
+          <div class="vacation-title">假期倒计时</div>
+          <div class="date-row">
+            <span class="date-label">寒假</span>
+            <label>
+              <small>开始</small>
+              <input v-model="winterVacationStart" type="date" />
+            </label>
+            <label>
+              <small>结束</small>
+              <input v-model="winterVacationEnd" type="date" />
+            </label>
+          </div>
+          <div class="date-row">
+            <span class="date-label">暑假</span>
+            <label>
+              <small>开始</small>
+              <input v-model="summerVacationStart" type="date" />
+            </label>
+            <label>
+              <small>结束</small>
+              <input v-model="summerVacationEnd" type="date" />
+            </label>
+          </div>
+          <p class="date-tip">保存后会自动显示在“成长刻度”的时光胶囊里。</p>
+        </div>
       </el-collapse-item>
     </el-collapse>
   </div>
@@ -101,6 +126,10 @@ const {
   playerAutoplay,
   playerOrder,
   playerLoop,
+  winterVacationStart,
+  winterVacationEnd,
+  summerVacationStart,
+  summerVacationEnd,
 } = storeToRefs(store);
 
 // 默认选中项
@@ -158,6 +187,64 @@ const radioChange = () => {
                 margin-right: 0;
               }
             }
+          }
+        }
+
+        .vacation-setting {
+          .vacation-title {
+            margin-bottom: 0.8rem;
+            font-size: 14px;
+            font-weight: 700;
+          }
+
+          .date-row {
+            margin-bottom: 0.75rem;
+            display: grid;
+            grid-template-columns: 46px 1fr 1fr;
+            gap: 0.65rem;
+            align-items: end;
+
+            .date-label {
+              padding-bottom: 0.45rem;
+              font-size: 14px;
+              font-weight: 700;
+            }
+
+            label {
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              gap: 0.28rem;
+
+              small {
+                color: rgb(255 255 255 / 66%);
+                font-size: 12px;
+              }
+
+              input {
+                width: 100%;
+                height: 34px;
+                padding: 0 0.55rem;
+                border: 1px solid transparent;
+                border-radius: 6px;
+                outline: none;
+                color: #fff;
+                font-family: "HarmonyOS_Regular", sans-serif;
+                background: rgb(255 255 255 / 18%);
+
+                &:focus {
+                  border-color: rgb(255 255 255 / 72%);
+                  background: rgb(255 255 255 / 24%);
+                }
+              }
+            }
+          }
+
+          .date-tip {
+            margin-top: 0.3rem;
+            color: rgb(255 255 255 / 62%);
+            line-height: 1.5;
+            font-size: 12px;
           }
         }
         .el-radio-group {

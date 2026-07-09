@@ -225,6 +225,7 @@ const jumpTo = (url) => {
       display: flex;
       flex-direction: column;
       justify-content: center;
+      min-height: 0;
 
       .title {
         display: flex;
@@ -238,6 +239,11 @@ const jumpTo = (url) => {
           height: 28px;
           margin-right: 6px;
         }
+      }
+
+      :deep(.setting) {
+        min-height: 0;
+        overflow-y: auto;
       }
     }
   }

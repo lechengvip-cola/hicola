@@ -23,7 +23,7 @@
               <span v-if="item.badge === 'studyTodo'" class="todo-badge">
                 今日待完成：{{ todayTodoCount }}
               </span>
-              <Icon size="26">
+              <Icon size="28">
                 <component :is="siteIcon[item.icon]" />
               </Icon>
               <span class="content">
@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .links {
-  margin-top: 1.35rem;
+  margin-top: 1.15rem;
 
   .swiper {
     left: -10px;
@@ -155,11 +155,11 @@ onBeforeUnmount(() => {
   }
 
   .link-all {
-    height: 258px;
+    height: 270px;
 
     .item {
       position: relative;
-      height: 116px;
+      height: 122px;
       width: 100%;
       display: flex;
       align-items: center;
@@ -203,14 +203,14 @@ onBeforeUnmount(() => {
       }
 
       .name {
-        font-size: 1.16rem;
+        font-size: 1.2rem;
         font-weight: 700;
       }
 
       .desc {
         max-width: 100%;
         margin-top: 5px;
-        font-size: 0.84rem;
+        font-size: 0.86rem;
         opacity: 0.78;
       }
 

@@ -17,9 +17,9 @@ const store = mainStore();
 <style lang="scss" scoped>
 .left {
   // flex: 1 0 0%;
-  width: 46%;
-  margin-right: 18px;
-  transform: translateY(20px);
+  width: 43%;
+  margin-right: 22px;
+  transform: translateY(54px);
   &.hidden {
     display: none;
   }

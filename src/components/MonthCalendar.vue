@@ -8,25 +8,6 @@
       <TodayInfo class="calendar-today-info" />
     </div>
 
-    <header class="calendar-head">
-      <div>
-        <p class="eyebrow">月历视图</p>
-        <h2>{{ currentYear }} 年 {{ currentMonthText }} 月</h2>
-        <p class="month-note">自动标记学习收纳盒待办</p>
-      </div>
-      <div class="today-pill">
-        <span>今天</span>
-        <strong>{{ todayDate }}</strong>
-        <em>{{ todayWeekday }}</em>
-      </div>
-    </header>
-
-    <div class="month-strip">
-      <span>{{ prevMonthText }}</span>
-      <strong>{{ currentMonthText }}</strong>
-      <span>{{ nextMonthText }}</span>
-    </div>
-
     <div class="week-row">
       <span v-for="week in weeks" :key="week">{{ week }}</span>
     </div>
@@ -84,8 +65,6 @@ const refreshStudyItems = () => {
 const currentYear = computed(() => now.value.getFullYear());
 const currentMonth = computed(() => now.value.getMonth());
 const currentMonthText = computed(() => pad(currentMonth.value + 1));
-const prevMonthText = computed(() => pad(((currentMonth.value + 11) % 12) + 1));
-const nextMonthText = computed(() => pad(((currentMonth.value + 1) % 12) + 1));
 const todayKey = computed(() => formatDate(now.value));
 const todayDate = computed(() => now.value.getDate());
 const todayWeekday = computed(() => `星期${"日一二三四五六"[now.value.getDay()]}`);
@@ -155,7 +134,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .month-calendar {
-  width: min(92%, 600px);
+  width: min(92%, 560px);
   margin-top: 0;
   margin-left: auto;
   margin-right: clamp(14px, 2.6vw, 46px);
@@ -227,93 +206,6 @@ onBeforeUnmount(() => {
     :deep(.calendar-today-info .meta) {
       margin-top: 3px;
       font-size: 0.78rem;
-    }
-  }
-
-  .calendar-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.9rem;
-
-    .eyebrow {
-      margin-bottom: 0.3rem;
-      color: rgb(255 255 255 / 68%);
-      font-size: 0.82rem;
-    }
-
-    h2 {
-      font-size: clamp(1.65rem, 2.35vw, 2.15rem);
-      line-height: 1.2;
-    }
-
-    .month-note {
-      margin-top: 0.35rem;
-      color: rgb(255 255 255 / 62%);
-      font-size: 0.9rem;
-    }
-  }
-
-  .today-pill {
-    min-width: 92px;
-    padding: 0.65rem 0.75rem;
-    border-radius: 8px;
-    text-align: center;
-    background: rgb(238 255 249 / 92%);
-    color: #153736;
-    box-shadow: 0 10px 26px rgb(238 255 249 / 18%);
-
-    strong,
-    span,
-    em {
-      display: block;
-    }
-
-    span,
-    em {
-      color: rgb(21 55 54 / 70%);
-      font-style: normal;
-      font-weight: 700;
-    }
-
-    strong {
-      margin: 0.16rem 0;
-      font-size: 2.05rem;
-      line-height: 1;
-    }
-
-    em {
-      font-size: 0.78rem;
-    }
-  }
-
-  .month-strip {
-    margin-bottom: 0.9rem;
-    padding: 0.42rem;
-    border-radius: 999px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.35rem;
-    background: rgb(255 255 255 / 10%);
-
-    span,
-    strong {
-      min-height: 30px;
-      display: grid;
-      place-items: center;
-      border-radius: 999px;
-      font-size: 0.95rem;
-    }
-
-    span {
-      color: rgb(255 255 255 / 62%);
-    }
-
-    strong {
-      color: #153736;
-      background: rgb(238 255 249 / 90%);
-      font-size: 1.05rem;
     }
   }
 
@@ -439,7 +331,7 @@ onBeforeUnmount(() => {
   }
 
   @media (max-width: 1200px) {
-    width: min(94%, 580px);
+    width: min(94%, 540px);
 
     .clock-hero {
       grid-template-columns: 1fr;
@@ -463,10 +355,6 @@ onBeforeUnmount(() => {
     .clock-hero {
       padding: 0.85rem;
     }
-
-    .calendar-head h2 {
-      font-size: 1.15rem;
-    }
   }
 
   @media (max-width: 460px) {
@@ -479,15 +367,6 @@ onBeforeUnmount(() => {
         font-size: 2.45rem;
       }
     }
-
-    .today-pill {
-      min-width: 78px;
-
-      strong {
-        font-size: 1.7rem;
-      }
-    }
-
     .day-cell {
       min-height: 44px;
     }

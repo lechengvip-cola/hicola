@@ -132,12 +132,12 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .today-info {
   width: 100%;
-  min-height: 42px;
+  min-height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 0 8px;
+  gap: 12px;
+  padding: 0 12px;
   color: #efefef;
   text-shadow: 0 0 5px #00000050;
   overflow: hidden;
@@ -146,9 +146,9 @@ onBeforeUnmount(() => {
 
 .today-icon {
   position: relative;
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
 }
 
 .orbit {
@@ -213,20 +213,20 @@ onBeforeUnmount(() => {
 
 .title,
 .meta {
-  max-width: 210px;
+  max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .title {
-  font-size: 0.92rem;
+  font-size: 1.08rem;
   font-weight: 700;
 }
 
 .meta {
-  margin-top: 2px;
-  font-size: 0.78rem;
+  margin-top: 4px;
+  font-size: 0.9rem;
   opacity: 0.9;
 }
 

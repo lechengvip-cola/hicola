@@ -177,12 +177,18 @@ onBeforeUnmount(() => {
     }
 
     :deep(.calendar-today-info) {
-      min-height: 58px;
+      min-height: 68px;
       justify-content: flex-start;
-      padding: 0.55rem 0.85rem;
+      padding: 0.65rem 0.95rem;
       border-radius: 8px;
       background: rgb(255 255 255 / 12%);
       overflow: visible;
+    }
+
+    :deep(.calendar-today-info .today-icon) {
+      flex-basis: 46px;
+      width: 46px;
+      height: 46px;
     }
 
     :deep(.calendar-today-info .today-copy) {
@@ -200,12 +206,13 @@ onBeforeUnmount(() => {
     }
 
     :deep(.calendar-today-info .title) {
-      font-size: 0.98rem;
+      font-size: 1.16rem;
+      font-weight: 800;
     }
 
     :deep(.calendar-today-info .meta) {
-      margin-top: 3px;
-      font-size: 0.78rem;
+      margin-top: 4px;
+      font-size: 0.92rem;
     }
   }
 
@@ -365,6 +372,25 @@ onBeforeUnmount(() => {
 
       .clock-time {
         font-size: 2.45rem;
+      }
+
+      :deep(.calendar-today-info) {
+        min-height: 58px;
+        padding: 0.55rem 0.7rem;
+      }
+
+      :deep(.calendar-today-info .today-icon) {
+        flex-basis: 36px;
+        width: 36px;
+        height: 36px;
+      }
+
+      :deep(.calendar-today-info .title) {
+        font-size: 0.98rem;
+      }
+
+      :deep(.calendar-today-info .meta) {
+        font-size: 0.78rem;
       }
     }
     .day-cell {

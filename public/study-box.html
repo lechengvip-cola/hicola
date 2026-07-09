@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hi Cola - 学习收纳盒</title>
+    <link rel="stylesheet" href="/assets/css/study-box.css" />
+  </head>
+  <body>
+    <main class="study-shell">
+      <section class="hero glass-panel">
+        <div>
+          <a class="brand" href="/" aria-label="返回首页">hicola<span>.net</span></a>
+          <p class="eyebrow">Learning Box</p>
+          <h1>学习收纳盒</h1>
+          <p class="subtitle">把老师发的作业、通知和资料，整理成清晰的学习待办。</p>
+        </div>
+        <div class="summary">
+          <div>
+            <span>今日待完成</span>
+            <strong id="todayTodo">0 项</strong>
+          </div>
+          <div>
+            <span>明日提醒</span>
+            <strong id="tomorrowTodo">0 项</strong>
+          </div>
+          <button id="notifyBtn" class="soft-btn" type="button">开启作业提醒</button>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="upload-panel glass-panel">
+          <div id="dropZone" class="drop-zone">
+            <div class="drop-icon">↑</div>
+            <h2>把作业图片、通知截图、PDF 或学习资料拖到这里</h2>
+            <p>支持图片、PDF、Word、TXT</p>
+            <label class="primary-btn">
+              选择文件上传
+              <input id="fileInput" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.txt" />
+            </label>
+          </div>
+
+          <div class="manual-box">
+            <label for="manualText">识别文本 / 手动粘贴</label>
+            <textarea
+              id="manualText"
+              placeholder="可以把老师发的文字粘贴在这里，例如：今晚完成数学练习册 P35-P36，明天交，家长签字。"
+            ></textarea>
+            <button id="parseManualBtn" class="primary-btn" type="button">自动整理当前文字</button>
+          </div>
+
+          <div class="file-section">
+            <div class="section-title">
+              <h3>上传文件</h3>
+              <span id="fileCount">0 个</span>
+            </div>
+            <div id="fileList" class="file-list"></div>
+          </div>
+        </aside>
+
+        <section class="items-panel glass-panel">
+          <div class="panel-head">
+            <div>
+              <h2>今日待办与学习档案</h2>
+              <p>完成、编辑、删除都会自动保存到本机浏览器。</p>
+            </div>
+            <button id="clearDoneBtn" class="soft-btn" type="button">清空已完成</button>
+          </div>
+
+          <nav id="tabs" class="tabs" aria-label="学习收纳盒分类"></nav>
+          <div id="itemsList" class="items-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <div id="editModal" class="modal" hidden>
+      <form id="editForm" class="modal-card glass-panel">
+        <div class="modal-head">
+          <h2>编辑事项</h2>
+          <button id="closeEditBtn" type="button" aria-label="关闭">×</button>
+        </div>
+        <input type="hidden" id="editId" />
+        <label>
+          科目
+          <select id="editSubject">
+            <option>数学</option>
+            <option>语文</option>
+            <option>英语</option>
+            <option>科学</option>
+            <option>艺体</option>
+            <option>其他</option>
+          </select>
+        </label>
+        <label>
+          类型
+          <select id="editType">
+            <option>今日作业</option>
+            <option>重要提醒</option>
+            <option>考试提醒</option>
+            <option>通知公告</option>
+            <option>家长签字</option>
+            <option>错题整理</option>
+            <option>学习资料</option>
+          </select>
+        </label>
+        <label>
+          截止时间
+          <input id="editDueDate" type="date" />
+        </label>
+        <label>
+          重要程度
+          <select id="editPriority">
+            <option value="high">高</option>
+            <option value="medium">中</option>
+            <option value="low">低</option>
+          </select>
+        </label>
+        <label>
+          完成状态
+          <select id="editStatus">
+            <option value="todo">待完成</option>
+            <option value="done">已完成</option>
+          </select>
+        </label>
+        <label>
+          内容
+          <textarea id="editContent"></textarea>
+        </label>
+        <label class="check-row">
+          <input id="editNeedSign" type="checkbox" />
+          需要家长签字
+        </label>
+        <div class="modal-actions">
+          <button class="soft-btn" type="button" id="cancelEditBtn">取消</button>
+          <button class="primary-btn" type="submit">保存修改</button>
+        </div>
+      </form>
+    </div>
+
+    <script src="/assets/js/study-box.js" defer></script>
+  </body>
+</html>

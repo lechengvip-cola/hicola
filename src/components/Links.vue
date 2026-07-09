@@ -20,6 +20,9 @@
               :style="index < 3 ? 'margin-bottom: 20px' : null"
               @click="jumpLink(item)"
             >
+              <span v-if="item.badge === 'studyTodo'" class="todo-badge">
+                今日待完成：{{ todayTodoCount }}
+              </span>
               <Icon size="26">
                 <component :is="siteIcon[item.icon]" />
               </Icon>
@@ -45,6 +48,29 @@ import { Pagination, Mousewheel } from "swiper/modules";
 import siteLinks from "@/assets/siteLinks.json";
 
 const store = mainStore();
+const todayTodoCount = ref(0);
+
+const getToday = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
+const getTodayTodoCount = () => {
+  try {
+    const items = JSON.parse(localStorage.getItem("hicola-study-items") || "[]");
+    const today = getToday();
+    return items.filter((item) => item.status !== "done" && item.dueDate === today).length;
+  } catch (error) {
+    console.warn("读取学习收纳盒数据失败", error);
+    return 0;
+  }
+};
+
+const refreshStudyBadge = () => {
+  todayTodoCount.value = getTodayTodoCount();
+};
 
 const siteLinksList = computed(() => {
   const result = [];
@@ -68,10 +94,23 @@ const jumpLink = (data) => {
   // TODO: 后续替换为百度网盘链接。
   if (data.name === "音乐" && store.musicClick) {
     if (typeof $openList === "function") $openList();
+  } else if (data.link?.startsWith("/")) {
+    window.location.href = data.link;
   } else {
     window.open(data.link, "_blank");
   }
 };
+
+onMounted(() => {
+  refreshStudyBadge();
+  window.addEventListener("storage", refreshStudyBadge);
+  window.addEventListener("focus", refreshStudyBadge);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("storage", refreshStudyBadge);
+  window.removeEventListener("focus", refreshStudyBadge);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -119,6 +158,7 @@ const jumpLink = (data) => {
     height: 220px;
 
     .item {
+      position: relative;
       height: 100px;
       width: 100%;
       display: flex;
@@ -127,6 +167,21 @@ const jumpLink = (data) => {
       justify-content: center;
       padding: 0 10px;
       animation: fade 0.5s;
+
+      .todo-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        max-width: calc(100% - 16px);
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: rgb(255 255 255 / 16%);
+        color: rgb(255 255 255 / 88%);
+        font-size: 0.68rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%);
+      }
 
       &:hover {
         transform: scale(1.02);
@@ -170,6 +225,7 @@ const jumpLink = (data) => {
 
       @media (max-width: 460px) {
         flex-direction: column;
+        padding-top: 16px;
 
         .content {
           margin-left: 0;
@@ -184,6 +240,13 @@ const jumpLink = (data) => {
         .desc {
           font-size: 0.72rem;
           max-width: 90px;
+        }
+
+        .todo-badge {
+          top: 5px;
+          right: 6px;
+          font-size: 0.58rem;
+          padding: 2px 5px;
         }
       }
     }

@@ -31,8 +31,9 @@
   },
   {
     "icon": "LaptopCode",
-    "name": "我的网盘",
-    "description": "文件存储与分享",
-    "link": "#"
+    "name": "学习收纳盒",
+    "description": "作业资料自动整理",
+    "link": "/study-box",
+    "badge": "studyTodo"
   }
 ]

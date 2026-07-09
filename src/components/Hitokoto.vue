@@ -80,7 +80,7 @@ onMounted(() => {
 .hitokoto {
   width: 100%;
   height: 100%;
-  padding: 20px;
+  padding: 24px;
   animation: fade 0.5s;
   .open-music {
     width: 100%;
@@ -109,7 +109,8 @@ onMounted(() => {
     flex-direction: column;
     justify-content: space-evenly;
     .text {
-      font-size: 1.1rem;
+      font-size: 1.22rem;
+      line-height: 1.75;
       word-break: break-all;
       text-overflow: ellipsis;
       overflow: hidden;
@@ -121,7 +122,7 @@ onMounted(() => {
       margin-top: 10px;
       font-weight: bold;
       align-self: flex-end;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
     }
   }
 }

@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .links {
-  margin-top: 1.25rem;
+  margin-top: 1.35rem;
 
   .swiper {
     left: -10px;
@@ -155,17 +155,17 @@ onBeforeUnmount(() => {
   }
 
   .link-all {
-    height: 220px;
+    height: 258px;
 
     .item {
       position: relative;
-      height: 100px;
+      height: 116px;
       width: 100%;
       display: flex;
       align-items: center;
       flex-direction: row;
       justify-content: center;
-      padding: 0 10px;
+      padding: 0 14px;
       animation: fade 0.5s;
 
       .todo-badge {
@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
 
       .content {
         min-width: 0;
-        margin-left: 8px;
+        margin-left: 10px;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -203,13 +203,14 @@ onBeforeUnmount(() => {
       }
 
       .name {
-        font-size: 1.05rem;
+        font-size: 1.16rem;
+        font-weight: 700;
       }
 
       .desc {
         max-width: 100%;
-        margin-top: 4px;
-        font-size: 0.78rem;
+        margin-top: 5px;
+        font-size: 0.84rem;
         opacity: 0.78;
       }
 
@@ -220,7 +221,7 @@ onBeforeUnmount(() => {
       }
 
       @media (max-width: 720px) {
-        height: 80px;
+        height: 88px;
       }
 
       @media (max-width: 460px) {
@@ -252,7 +253,7 @@ onBeforeUnmount(() => {
     }
 
     @media (max-width: 720px) {
-      height: 180px;
+      height: 198px;
     }
   }
 }

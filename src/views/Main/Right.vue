@@ -57,13 +57,14 @@ const siteUrl = computed(() => {
 <style lang="scss" scoped>
 .right {
   // flex: 1 0 0%;
-  width: 50%;
+  width: 54%;
+  max-width: 760px;
   margin-left: 0.75rem;
 
   .tagline {
-    min-height: 84px;
-    margin-bottom: 1.25rem;
-    padding: 0.85rem 1.25rem;
+    min-height: 98px;
+    margin-bottom: 1.35rem;
+    padding: 1rem 1.35rem;
     display: flex;
     align-items: center;
     gap: 0.9rem;
@@ -87,14 +88,14 @@ const siteUrl = computed(() => {
       font-family: "HarmonyOS_Regular", sans-serif;
 
       p {
-        font-size: 0.92rem;
+        font-size: 1.02rem;
       }
     }
 
     .capsule-entry {
       flex: 0 0 auto;
-      height: 34px;
-      padding: 0 12px;
+      height: 38px;
+      padding: 0 14px;
       border: 0;
       border-radius: 6px;
       display: inline-flex;
@@ -102,7 +103,7 @@ const siteUrl = computed(() => {
       gap: 6px;
       color: #fff;
       font-family: "HarmonyOS_Regular", sans-serif;
-      font-size: 0.86rem;
+      font-size: 0.92rem;
       background: rgb(255 255 255 / 15%);
       cursor: pointer;
       transition:
@@ -147,6 +148,7 @@ const siteUrl = computed(() => {
   @media (max-width: 720px) {
     margin-left: 0;
     width: 100%;
+    max-width: none;
 
     .tagline {
       display: none;

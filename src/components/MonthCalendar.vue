@@ -1,15 +1,31 @@
 <template>
   <section class="month-calendar cards">
+    <div class="clock-hero">
+      <div>
+        <p class="clock-date">{{ currentYear }} 年 {{ currentMonthText }} 月 {{ todayDate }} 日 {{ todayWeekday }}</p>
+        <div class="clock-time">{{ clockTime }}</div>
+      </div>
+      <TodayInfo class="calendar-today-info" />
+    </div>
+
     <header class="calendar-head">
       <div>
-        <p class="eyebrow">本月安排</p>
+        <p class="eyebrow">月历视图</p>
         <h2>{{ currentYear }} 年 {{ currentMonthText }} 月</h2>
+        <p class="month-note">自动标记学习收纳盒待办</p>
       </div>
       <div class="today-pill">
+        <span>今天</span>
         <strong>{{ todayDate }}</strong>
-        <span>{{ todayWeekday }}</span>
+        <em>{{ todayWeekday }}</em>
       </div>
     </header>
+
+    <div class="month-strip">
+      <span>{{ prevMonthText }}</span>
+      <strong>{{ currentMonthText }}</strong>
+      <span>{{ nextMonthText }}</span>
+    </div>
 
     <div class="week-row">
       <span v-for="week in weeks" :key="week">{{ week }}</span>
@@ -32,21 +48,26 @@
         :title="day.todoCount ? `${day.dateText} 有 ${day.todoCount} 项待完成` : day.dateText"
       >
         <span class="date-number">{{ day.day }}</span>
-        <span v-if="day.todoCount" class="todo-dot">{{ day.todoCount }}</span>
+        <small v-if="day.isToday">今日</small>
+        <span v-if="day.todoCount" class="todo-dot">{{ day.todoCount }} 项</span>
       </button>
     </div>
 
     <footer class="calendar-foot">
       <span>今日待完成 {{ todayTodoCount }} 项</span>
       <span>本月待办 {{ monthTodoCount }} 项</span>
+      <span>距月底 {{ monthRemainingDays }} 天</span>
     </footer>
   </section>
 </template>
 
 <script setup>
+import TodayInfo from "@/components/TodayInfo.vue";
+
 const weeks = ["一", "二", "三", "四", "五", "六", "日"];
 const now = ref(new Date());
 const studyItems = ref([]);
+const clockTimer = ref(null);
 
 const pad = (value) => String(value).padStart(2, "0");
 const formatDate = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -63,9 +84,18 @@ const refreshStudyItems = () => {
 const currentYear = computed(() => now.value.getFullYear());
 const currentMonth = computed(() => now.value.getMonth());
 const currentMonthText = computed(() => pad(currentMonth.value + 1));
+const prevMonthText = computed(() => pad(((currentMonth.value + 11) % 12) + 1));
+const nextMonthText = computed(() => pad(((currentMonth.value + 1) % 12) + 1));
 const todayKey = computed(() => formatDate(now.value));
 const todayDate = computed(() => now.value.getDate());
 const todayWeekday = computed(() => `星期${"日一二三四五六"[now.value.getDay()]}`);
+const clockTime = computed(() => {
+  return `${pad(now.value.getHours())}:${pad(now.value.getMinutes())}:${pad(now.value.getSeconds())}`;
+});
+const monthRemainingDays = computed(() => {
+  const end = new Date(currentYear.value, currentMonth.value + 1, 0);
+  return Math.max(0, end.getDate() - todayDate.value);
+});
 
 const todoMap = computed(() => {
   return studyItems.value.reduce((result, item) => {
@@ -109,11 +139,15 @@ const monthTodoCount = computed(() => {
 
 onMounted(() => {
   refreshStudyItems();
+  clockTimer.value = window.setInterval(() => {
+    now.value = new Date();
+  }, 1000);
   window.addEventListener("storage", refreshStudyItems);
   window.addEventListener("focus", refreshStudyItems);
 });
 
 onBeforeUnmount(() => {
+  window.clearInterval(clockTimer.value);
   window.removeEventListener("storage", refreshStudyItems);
   window.removeEventListener("focus", refreshStudyItems);
 });
@@ -121,56 +155,165 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .month-calendar {
-  width: min(76%, 520px);
-  margin-top: 11.5rem;
+  width: min(92%, 600px);
+  margin-top: 0;
   margin-left: auto;
-  margin-right: clamp(18px, 4vw, 70px);
-  padding: 1rem;
-  background-color: #00000024;
-  backdrop-filter: blur(12px);
+  margin-right: clamp(14px, 2.6vw, 46px);
+  padding: 1.05rem 1.1rem 1rem;
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 14%), rgb(0 0 0 / 18%)),
+    rgb(0 0 0 / 22%);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 22px 60px rgb(0 0 0 / 22%),
+    inset 0 1px 0 rgb(255 255 255 / 12%);
   animation: fade 0.5s;
+
+  .clock-hero {
+    margin-bottom: 1rem;
+    padding: 1rem 1.05rem;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    background:
+      radial-gradient(circle at 12% 20%, rgb(238 255 249 / 22%), transparent 32%),
+      rgb(0 0 0 / 18%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%);
+
+    .clock-date {
+      color: rgb(255 255 255 / 76%);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .clock-time {
+      margin-top: 0.35rem;
+      font-family: "UnidreamLED", "HarmonyOS_Regular", sans-serif;
+      font-size: clamp(3.1rem, 5.2vw, 4.7rem);
+      line-height: 0.95;
+      letter-spacing: 1px;
+      text-shadow: 0 10px 28px rgb(0 0 0 / 28%);
+    }
+
+    :deep(.calendar-today-info) {
+      min-height: 58px;
+      justify-content: flex-start;
+      padding: 0.55rem 0.85rem;
+      border-radius: 8px;
+      background: rgb(255 255 255 / 12%);
+      overflow: visible;
+    }
+
+    :deep(.calendar-today-info .today-copy) {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.35;
+    }
+
+    :deep(.calendar-today-info .title),
+    :deep(.calendar-today-info .meta) {
+      max-width: none;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    :deep(.calendar-today-info .title) {
+      font-size: 0.98rem;
+    }
+
+    :deep(.calendar-today-info .meta) {
+      margin-top: 3px;
+      font-size: 0.78rem;
+    }
+  }
 
   .calendar-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.9rem;
 
     .eyebrow {
-      margin-bottom: 0.25rem;
-      color: rgb(255 255 255 / 62%);
-      font-size: 0.78rem;
+      margin-bottom: 0.3rem;
+      color: rgb(255 255 255 / 68%);
+      font-size: 0.82rem;
     }
 
     h2 {
-      font-size: 1.25rem;
+      font-size: clamp(1.65rem, 2.35vw, 2.15rem);
       line-height: 1.2;
+    }
+
+    .month-note {
+      margin-top: 0.35rem;
+      color: rgb(255 255 255 / 62%);
+      font-size: 0.9rem;
     }
   }
 
   .today-pill {
-    min-width: 70px;
-    padding: 0.5rem 0.65rem;
+    min-width: 92px;
+    padding: 0.65rem 0.75rem;
     border-radius: 8px;
     text-align: center;
-    background: rgb(255 255 255 / 14%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%);
+    background: rgb(238 255 249 / 92%);
+    color: #153736;
+    box-shadow: 0 10px 26px rgb(238 255 249 / 18%);
 
     strong,
-    span {
+    span,
+    em {
       display: block;
     }
 
+    span,
+    em {
+      color: rgb(21 55 54 / 70%);
+      font-style: normal;
+      font-weight: 700;
+    }
+
     strong {
-      font-size: 1.35rem;
+      margin: 0.16rem 0;
+      font-size: 2.05rem;
       line-height: 1;
     }
 
+    em {
+      font-size: 0.78rem;
+    }
+  }
+
+  .month-strip {
+    margin-bottom: 0.9rem;
+    padding: 0.42rem;
+    border-radius: 999px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.35rem;
+    background: rgb(255 255 255 / 10%);
+
+    span,
+    strong {
+      min-height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      font-size: 0.95rem;
+    }
+
     span {
-      margin-top: 0.25rem;
-      color: rgb(255 255 255 / 70%);
-      font-size: 0.72rem;
+      color: rgb(255 255 255 / 62%);
+    }
+
+    strong {
+      color: #153736;
+      background: rgb(238 255 249 / 90%);
+      font-size: 1.05rem;
     }
   }
 
@@ -178,38 +321,52 @@ onBeforeUnmount(() => {
   .date-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 0.35rem;
   }
 
   .week-row {
-    margin-bottom: 0.45rem;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+    background: rgb(230 255 246 / 12%);
 
     span {
+      min-height: 38px;
+      display: grid;
+      place-items: center;
       text-align: center;
-      color: rgb(255 255 255 / 58%);
-      font-size: 0.74rem;
+      color: rgb(255 255 255 / 78%);
+      font-size: 0.95rem;
+      font-weight: 700;
     }
+  }
+
+  .date-grid {
+    overflow: hidden;
+    border-radius: 0 0 8px 8px;
   }
 
   .day-cell {
     position: relative;
-    aspect-ratio: 1;
+    min-height: 58px;
+    aspect-ratio: 1.26;
     min-width: 0;
     border: 0;
-    border-radius: 7px;
+    border-right: 1px solid rgb(255 255 255 / 8%);
+    border-bottom: 1px solid rgb(255 255 255 / 8%);
+    border-radius: 0;
     color: #fff;
-    background: rgb(255 255 255 / 8%);
+    background: rgb(255 255 255 / 7%);
     transition:
       transform 0.2s,
       background-color 0.2s;
 
     &:hover {
-      transform: translateY(-1px);
-      background: rgb(255 255 255 / 16%);
+      z-index: 1;
+      transform: translateY(-1px) scale(1.02);
+      background: rgb(255 255 255 / 18%);
     }
 
     &.muted {
-      opacity: 0.34;
+      opacity: 0.36;
     }
 
     &.weekend:not(.muted) {
@@ -219,10 +376,16 @@ onBeforeUnmount(() => {
     &.today {
       color: #153736;
       background: rgb(238 255 249 / 92%);
-      box-shadow: 0 8px 22px rgb(255 255 255 / 14%);
+      box-shadow:
+        0 0 0 1px rgb(255 255 255 / 54%),
+        0 10px 24px rgb(238 255 249 / 18%);
 
       .date-number {
         font-weight: 800;
+      }
+
+      small {
+        color: rgb(21 55 54 / 66%);
       }
     }
 
@@ -232,22 +395,35 @@ onBeforeUnmount(() => {
   }
 
   .date-number {
-    font-size: 0.94rem;
+    position: absolute;
+    top: 0.48rem;
+    left: 0.58rem;
+    font-size: 1.28rem;
+    line-height: 1;
+  }
+
+  small {
+    position: absolute;
+    top: 0.58rem;
+    right: 0.58rem;
+    color: rgb(255 255 255 / 56%);
+    font-size: 0.7rem;
+    font-weight: 700;
   }
 
   .todo-dot {
     position: absolute;
-    right: 4px;
-    bottom: 4px;
-    min-width: 15px;
-    height: 15px;
-    padding: 0 4px;
+    left: 0.52rem;
+    right: 0.52rem;
+    bottom: 0.44rem;
+    min-height: 18px;
+    padding: 0 0.35rem;
     display: grid;
     place-items: center;
     border-radius: 999px;
     color: #153736;
     background: rgb(238 255 249 / 92%);
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     font-weight: 800;
     line-height: 1;
   }
@@ -256,13 +432,27 @@ onBeforeUnmount(() => {
     display: flex;
     justify-content: space-between;
     gap: 0.75rem;
-    margin-top: 0.85rem;
-    color: rgb(255 255 255 / 70%);
-    font-size: 0.78rem;
+    margin-top: 0.95rem;
+    color: rgb(255 255 255 / 76%);
+    font-size: 0.9rem;
+    font-weight: 700;
   }
 
   @media (max-width: 1200px) {
-    width: min(86%, 500px);
+    width: min(94%, 580px);
+
+    .clock-hero {
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+
+      .clock-time {
+        font-size: clamp(2.8rem, 6vw, 4.2rem);
+      }
+    }
+
+    .day-cell {
+      min-height: 52px;
+    }
   }
 
   @media (max-width: 720px) {
@@ -270,19 +460,53 @@ onBeforeUnmount(() => {
     margin: 20vh auto 1rem;
     padding: 0.85rem;
 
+    .clock-hero {
+      padding: 0.85rem;
+    }
+
     .calendar-head h2 {
       font-size: 1.15rem;
     }
   }
 
   @media (max-width: 460px) {
-    .week-row,
-    .date-grid {
-      gap: 0.25rem;
+    .clock-hero {
+      .clock-date {
+        font-size: 0.86rem;
+      }
+
+      .clock-time {
+        font-size: 2.45rem;
+      }
+    }
+
+    .today-pill {
+      min-width: 78px;
+
+      strong {
+        font-size: 1.7rem;
+      }
+    }
+
+    .day-cell {
+      min-height: 44px;
     }
 
     .date-number {
-      font-size: 0.82rem;
+      top: 0.36rem;
+      left: 0.42rem;
+      font-size: 1rem;
+    }
+
+    small {
+      display: none;
+    }
+
+    .todo-dot {
+      left: 0.3rem;
+      right: 0.3rem;
+      bottom: 0.3rem;
+      font-size: 0.58rem;
     }
 
     .calendar-foot {

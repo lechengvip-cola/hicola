@@ -1,0 +1,18 @@
+name = "hicola"
+compatibility_date = "2024-06-20"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hicola-album"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "ALBUM_BUCKET"
+bucket_name = "hicola-album-private"
+
+[vars]
+ALBUM_TIMEZONE = "Asia/Shanghai"
+MAX_UPLOAD_SIZE = "52428800"
+ENVIRONMENT = "production"

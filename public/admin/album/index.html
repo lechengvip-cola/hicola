@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>成长相册后台</title>
+    <link rel="stylesheet" href="/assets/css/album.css" />
+  </head>
+  <body>
+    <main class="album-shell">
+      <header class="topbar">
+        <a class="brand" href="/">hicola<span style="font-size: 0.34em">.net</span></a>
+        <a class="btn" href="/album.html">查看相册</a>
+      </header>
+      <section class="admin-layout">
+        <nav class="admin-nav glass">
+          <a href="#upload" class="active">快速上传</a>
+          <a href="#pending">待整理箱</a>
+          <a href="#published">已发布相册</a>
+          <a href="#settings">系统设置</a>
+        </nav>
+        <section class="panel glass">
+          <div id="adminToast" class="toast"></div>
+          <div id="uploadPanel">
+            <h1>快速上传</h1>
+            <p class="muted">将照片、视频或文件夹拖到这里，上传后默认进入待整理箱。</p>
+            <div id="dropZone" class="upload-zone">
+              <div>
+                <h2>将照片、视频或文件夹拖到这里</h2>
+                <p class="muted">支持 JPG、PNG、WebP、HEIC、MP4、MOV、WebM</p>
+                <p>
+                  <button id="pickFiles" class="btn primary" type="button">选择照片和视频</button>
+                  <button id="pickFolder" class="btn" type="button">选择文件夹</button>
+                  <button id="pickCamera" class="btn" type="button">手机上传</button>
+                </p>
+              </div>
+            </div>
+            <input id="fileInput" type="file" multiple accept="image/*,video/*" hidden />
+            <input id="folderInput" type="file" multiple webkitdirectory hidden />
+            <input id="cameraInput" type="file" multiple accept="image/*,video/*" hidden />
+            <div style="margin: 18px 0" class="progress"><span id="uploadProgress"></span></div>
+            <div id="uploadSummary" class="muted">等待上传</div>
+            <div id="uploadList" class="list" style="margin-top: 14px"></div>
+          </div>
+
+          <div id="pendingPanel" hidden>
+            <h1>待整理箱</h1>
+            <p><button id="publishAll" class="btn primary" type="button">确认并发布全部</button></p>
+            <div id="pendingList" class="list"></div>
+          </div>
+
+          <div id="publishedPanel" hidden>
+            <h1>已发布相册</h1>
+            <div id="publishedList" class="list"></div>
+          </div>
+
+          <div id="settingsPanel" hidden>
+            <h1>系统设置</h1>
+            <div id="securityStatus" class="muted"></div>
+            <h2>访问安全</h2>
+            <label><input id="accessEnabled" type="checkbox" /> 开启家庭相册访问</label>
+            <label class="form-row">
+              <span>家庭会话有效期（1-30天）</span>
+              <input id="sessionDays" type="number" min="1" max="30" value="30" />
+            </label>
+            <button id="saveSecurity" class="btn primary" type="button">保存访问设置</button>
+            <h2>设置或修改家庭密码</h2>
+            <label class="form-row"><span>新家庭密码</span><input id="newPassword" type="password" /></label>
+            <label class="form-row"><span>再次输入家庭密码</span><input id="confirmPassword" type="password" /></label>
+            <label><input id="showAdminPassword" type="checkbox" /> 显示密码</label>
+            <p><button id="savePassword" class="btn primary" type="button">保存家庭密码</button></p>
+            <h2>家庭设备</h2>
+            <button id="logoutAll" class="btn danger" type="button">退出所有家庭设备</button>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="/assets/js/album-admin.js" type="module"></script>
+  </body>
+</html>

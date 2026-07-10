@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>可乐的成长相册</title>
+    <link rel="stylesheet" href="/assets/css/album.css" />
+  </head>
+  <body>
+    <main class="album-shell">
+      <header class="topbar">
+        <a class="brand" href="/">hicola<span style="font-size: 0.34em">.net</span></a>
+        <a class="btn" href="/">返回首页</a>
+      </header>
+
+      <section id="loginView" class="login-card glass" hidden>
+        <h1>可乐的成长相册</h1>
+        <p class="muted">这里珍藏着成长中的每一个瞬间</p>
+        <div id="closedMessage" class="toast"></div>
+        <form id="loginForm">
+          <label class="form-row">
+            <span>家庭密码</span>
+            <input id="passwordInput" type="password" autocomplete="current-password" />
+          </label>
+          <label><input id="showPassword" type="checkbox" /> 显示密码</label>
+          <label style="margin-left: 14px"><input id="rememberDevice" type="checkbox" checked /> 记住本设备 30 天</label>
+          <div style="margin-top: 18px">
+            <button class="btn primary" type="submit">进入相册</button>
+          </div>
+          <div id="loginToast" class="toast"></div>
+        </form>
+      </section>
+
+      <section id="albumView" hidden>
+        <div class="hero">
+          <div class="hero-main glass">
+            <h1>可乐的成长相册</h1>
+            <p>按年份、月份和拍摄日期整理成长瞬间，精选照片会收藏在“精选成长”。</p>
+            <div class="tabs">
+              <button class="tab active" data-view="all">全部照片</button>
+              <button class="tab" data-view="favorites">精选成长</button>
+              <select id="yearSelect" class="tab" aria-label="年份筛选"></select>
+            </div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat glass">相册数量<strong id="eventCount">0</strong></div>
+            <div class="stat glass">精选照片<strong id="favoriteCount">0</strong></div>
+          </div>
+        </div>
+
+        <section id="eventsPanel" class="album-grid"></section>
+        <section id="detailPanel" class="panel glass" hidden></section>
+        <section id="favoritesPanel" class="media-grid" hidden></section>
+      </section>
+    </main>
+
+    <div id="lightbox" class="lightbox">
+      <button class="btn close" type="button">关闭</button>
+      <button class="prev" type="button">‹</button>
+      <div id="lightboxContent"></div>
+      <button class="next" type="button">›</button>
+    </div>
+    <script src="/assets/js/album.js" type="module"></script>
+  </body>
+</html>

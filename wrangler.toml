@@ -1,0 +1,8 @@
+name = "hicola"
+compatibility_date = "2024-06-20"
+pages_build_output_dir = "dist"
+
+[vars]
+ALBUM_TIMEZONE = "Asia/Shanghai"
+MAX_UPLOAD_SIZE = "52428800"
+ENVIRONMENT = "production"

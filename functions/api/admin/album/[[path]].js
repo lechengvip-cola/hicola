@@ -284,6 +284,9 @@ const adminMedia = async (env, id, kind) => {
 
 export async function onRequest(context) {
   const { request, env } = context;
+  if (!env.DB || !env.ALBUM_BUCKET) {
+    return error("ALBUM_NOT_CONFIGURED", "请先绑定 D1 数据库和私有 R2 Bucket。", 503);
+  }
   const admin = requireAdmin(request, env);
   if (admin.response) return admin.response;
   const parts = partsOf(context);

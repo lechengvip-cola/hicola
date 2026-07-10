@@ -5,7 +5,7 @@ import { error, json, methodNotAllowed, noStoreHeaders, notFound, ok, readJson }
 const routeParts = (context) => context.params.path || [];
 
 const authStatus = async (env, request) => {
-  if (!env.DB || !env.ALBUM_BUCKET) {
+  if (!env.DB) {
     return ok({
       authenticated: false,
       reason: "missing_bindings",
@@ -116,6 +116,7 @@ const favorites = async (env, request) => {
 };
 
 const media = async (env, request, id, kind) => {
+  if (!env.ALBUM_BUCKET) return error("R2_NOT_ENABLED", "成长相册媒体存储暂未启用。", 503);
   const guard = await requireFamily(env, request);
   if (guard.response) return guard.response;
   const row = await env.DB.prepare(
@@ -141,7 +142,7 @@ export async function onRequest(context) {
   const { request, env } = context;
   const parts = routeParts(context);
   try {
-    if ((!env.DB || !env.ALBUM_BUCKET) && !(request.method === "GET" && parts[0] === "auth" && parts[1] === "status")) {
+    if (!env.DB && !(request.method === "GET" && parts[0] === "auth" && parts[1] === "status")) {
       return error("ALBUM_NOT_CONFIGURED", "成长相册暂未开放。", 503);
     }
     if (request.method === "GET" && parts[0] === "auth" && parts[1] === "status") return authStatus(env, request);

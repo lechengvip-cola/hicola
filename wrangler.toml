@@ -2,6 +2,12 @@ name = "hicola"
 compatibility_date = "2024-06-20"
 pages_build_output_dir = "dist"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "hicola-album"
+database_id = "8d09ce3b-024a-49d9-89fe-ff8fe08c58e2"
+migrations_dir = "migrations"
+
 [vars]
 ALBUM_TIMEZONE = "Asia/Shanghai"
 MAX_UPLOAD_SIZE = "52428800"

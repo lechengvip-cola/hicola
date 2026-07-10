@@ -284,8 +284,8 @@ const adminMedia = async (env, id, kind) => {
 
 export async function onRequest(context) {
   const { request, env } = context;
-  if (!env.DB || !env.ALBUM_BUCKET) {
-    return error("ALBUM_NOT_CONFIGURED", "请先绑定 D1 数据库和私有 R2 Bucket。", 503);
+  if (!env.DB) {
+    return error("ALBUM_NOT_CONFIGURED", "请先绑定 D1 数据库。", 503);
   }
   const admin = requireAdmin(request, env);
   if (admin.response) return admin.response;
@@ -299,7 +299,10 @@ export async function onRequest(context) {
     if (request.method === "GET" && parts[0] === "batches" && parts[1]) return batchDetail(env, parts[1]);
     if (request.method === "POST" && parts[0] === "batches" && parts[1] && parts[2] === "retry") return retryBatch(env, parts[1]);
     if (request.method === "POST" && parts[0] === "upload" && parts[1] === "prepare") return prepareUpload(env);
-    if (request.method === "POST" && parts[0] === "upload" && parts[1] === "complete") return completeUpload(env, request);
+    if (request.method === "POST" && parts[0] === "upload" && parts[1] === "complete") {
+      if (!env.ALBUM_BUCKET) return error("R2_NOT_ENABLED", "请先启用并绑定 R2 Bucket。", 503);
+      return completeUpload(env, request);
+    }
     if (request.method === "GET" && parts[0] === "pending") return listPending(env);
     if (request.method === "GET" && parts[0] === "published") return listPublished(env);
     if (request.method === "POST" && parts[0] === "publish") return publish(env, request);
@@ -309,7 +312,10 @@ export async function onRequest(context) {
     if (request.method === "DELETE" && parts[0] === "events" && parts[1]) return softDelete(env, "album_events", parts[1]);
     if (request.method === "PATCH" && parts[0] === "media" && parts[1]) return updateMedia(env, request, parts[1]);
     if (request.method === "DELETE" && parts[0] === "media" && parts[1]) return softDelete(env, "album_media", parts[1]);
-    if (request.method === "GET" && parts[0] === "media" && parts[1] && parts[2]) return adminMedia(env, parts[1], parts[2]);
+    if (request.method === "GET" && parts[0] === "media" && parts[1] && parts[2]) {
+      if (!env.ALBUM_BUCKET) return error("R2_NOT_ENABLED", "请先启用并绑定 R2 Bucket。", 503);
+      return adminMedia(env, parts[1], parts[2]);
+    }
     return request.method === "GET" ? notFound() : methodNotAllowed();
   } catch (err) {
     return error("ADMIN_ALBUM_ERROR", err.message || "管理员相册服务暂时不可用。", 500);

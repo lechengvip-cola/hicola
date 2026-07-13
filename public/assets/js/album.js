@@ -18,10 +18,15 @@ const setHidden = (el, hidden) => {
 
 const formatDateCn = (value = "") => {
   const [year, month, day] = value.split("-");
-  return year && month && day ? `${year}年${Number(month)}月${Number(day)}日` : value;
+  return year && month && day ? `${year} 年 ${Number(month)} 月 ${Number(day)} 日` : value;
 };
 
-const formatEventTitle = (event) => event.title || `${formatDateCn(event.eventDate)} · ${event.photoCount || 0}张照片`;
+const formatEventTitle = (event) => event.title || formatDateCn(event.eventDate);
+
+const updateViewTitle = (title) => {
+  const el = $("#viewTitle");
+  if (el) el.textContent = title;
+};
 
 const checkStatus = async () => {
   const data = await api("/api/album/auth/status");
@@ -51,27 +56,35 @@ const loadAlbum = async () => {
   $("#favoriteCount").textContent = state.favorites.length;
   const years = yearsData.years || [];
   $("#yearSelect").innerHTML = `<option value="">全部年份</option>${years.map((year) => `<option value="${year}">${year} 年</option>`).join("")}`;
+  updateViewTitle("全部相册");
   renderEvents(state.events);
 };
 
 const renderEvents = (events) => {
   const panel = $("#eventsPanel");
   if (!events.length) {
-    panel.innerHTML = `<div class="empty glass">还没有发布的成长相册</div>`;
+    panel.innerHTML = `
+      <div class="empty glass">
+        <h3>还没有发布的成长相册</h3>
+        <p>上传并发布照片后，这里会按日期生成一本本小相册。</p>
+      </div>`;
     return;
   }
   panel.innerHTML = events
     .map(
       (event) => `
       <a class="album-card glass" href="#" data-event-id="${event.id}">
-        ${
-          event.coverMediaId
-            ? `<img class="cover" loading="lazy" src="/api/album/media/${event.coverMediaId}/thumbnail" alt="">`
-            : `<div class="cover">暂无封面</div>`
-        }
+        <div class="album-cover-wrap">
+          ${
+            event.coverMediaId
+              ? `<img class="cover" loading="lazy" src="/api/album/media/${event.coverMediaId}/thumbnail" alt="">`
+              : `<div class="cover">暂无封面</div>`
+          }
+          <span class="photo-pill">${event.photoCount || 0} 张照片${event.videoCount ? ` · ${event.videoCount} 个视频` : ""}</span>
+        </div>
         <div class="body">
           <h3>${formatEventTitle(event)}</h3>
-          <p class="muted">${event.eventDate} · ${event.photoCount || 0} 张照片 · ${event.videoCount || 0} 个视频</p>
+          <p class="muted">${event.eventDate}</p>
         </div>
       </a>`,
     )
@@ -83,12 +96,14 @@ const showDetail = async (id) => {
   state.detailMedia = data.media || [];
   setHidden($("#eventsPanel"), true);
   setHidden($("#favoritesPanel"), true);
+  updateViewTitle(formatEventTitle(data.event));
   const panel = $("#detailPanel");
   setHidden(panel, false);
   panel.innerHTML = `
-    <p><button class="btn" id="backToEvents">返回相册</button></p>
-    <h1>${formatEventTitle(data.event)}</h1>
-    <p class="muted">${data.event.eventDate} · ${data.event.photoCount || 0} 张照片 · ${data.event.videoCount || 0} 个视频</p>
+    <div class="detail-head">
+      <button class="btn" id="backToEvents" type="button">返回相册</button>
+      <p class="muted">${data.event.eventDate} · ${data.event.photoCount || 0} 张照片 · ${data.event.videoCount || 0} 个视频</p>
+    </div>
     <div class="media-grid">
       ${state.detailMedia
         .map(
@@ -96,10 +111,9 @@ const showDetail = async (id) => {
           <button class="media-card glass" data-media-index="${index}" type="button">
             ${
               item.media_type === "video"
-                ? `<div class="thumb">视频</div>`
+                ? `<div class="thumb video-thumb">视频</div>`
                 : `<img class="thumb" loading="lazy" src="/api/album/media/${item.id}/thumbnail" alt="">`
             }
-            <div class="body"><span>${item.original_filename || "成长照片"}</span></div>
           </button>`,
         )
         .join("")}
@@ -107,12 +121,14 @@ const showDetail = async (id) => {
   $("#backToEvents").addEventListener("click", () => {
     setHidden(panel, true);
     setHidden($("#eventsPanel"), false);
+    updateViewTitle("全部相册");
   });
 };
 
 const renderFavorites = () => {
   setHidden($("#eventsPanel"), true);
   setHidden($("#detailPanel"), true);
+  updateViewTitle("精选照片");
   const panel = $("#favoritesPanel");
   setHidden(panel, false);
   state.detailMedia = state.favorites;
@@ -122,11 +138,10 @@ const renderFavorites = () => {
           (item, index) => `
           <button class="media-card glass" data-media-index="${index}" type="button">
             <img class="thumb" loading="lazy" src="/api/album/media/${item.id}/thumbnail" alt="">
-            <div class="body"><h3>${item.title || item.event_date || "精选成长"}</h3></div>
           </button>`,
         )
         .join("")
-    : `<div class="empty glass">还没有精选照片</div>`;
+    : `<div class="empty glass"><h3>还没有精选照片</h3><p>在后台标记精选后，这里会出现漂亮的小照片墙。</p></div>`;
 };
 
 const openLightbox = (index) => {
@@ -176,10 +191,12 @@ document.addEventListener("click", async (event) => {
 
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
+    if (tab.tagName === "SELECT") return;
     document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
     tab.classList.add("active");
     if (tab.dataset.view === "favorites") renderFavorites();
     else {
+      updateViewTitle("全部相册");
       setHidden($("#eventsPanel"), false);
       setHidden($("#detailPanel"), true);
       setHidden($("#favoritesPanel"), true);
@@ -190,6 +207,10 @@ document.querySelectorAll(".tab").forEach((tab) => {
 $("#yearSelect").addEventListener("change", async (event) => {
   const year = event.target.value;
   const data = await api(`/api/album/events${year ? `?year=${year}` : ""}`);
+  updateViewTitle(year ? `${year} 年相册` : "全部相册");
+  setHidden($("#eventsPanel"), false);
+  setHidden($("#detailPanel"), true);
+  setHidden($("#favoritesPanel"), true);
   renderEvents(data.events || []);
 });
 

@@ -558,3 +558,194 @@ button {
     flex-direction: column;
   }
 }
+
+/* Public album redesign: keep the glass style, but make the page calmer and fully Chinese. */
+.album-page-v2 {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding-top: clamp(12px, 4vh, 36px);
+  display: block;
+}
+
+.album-page-v2 .eyebrow {
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgb(223 252 243 / 86%);
+}
+
+.album-hero {
+  min-height: auto;
+  padding: clamp(26px, 4vw, 42px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(22px, 4vw, 46px);
+  align-items: center;
+}
+
+.album-hero h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2.6rem, 5vw, 4.6rem);
+  line-height: 1.06;
+}
+
+.album-hero-copy p:last-child {
+  max-width: 40em;
+  margin: 0;
+  color: rgb(255 255 255 / 82%);
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  line-height: 1.85;
+}
+
+.album-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(112px, 1fr));
+  gap: 14px;
+}
+
+.album-hero-stats div {
+  min-width: 118px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 12%);
+  border: 1px solid rgb(255 255 255 / 10%);
+}
+
+.album-hero-stats span {
+  display: block;
+  margin-bottom: 10px;
+  color: rgb(255 255 255 / 76%);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.album-hero-stats strong {
+  display: block;
+  color: #fff;
+  font-size: clamp(2.3rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.album-toolbar {
+  margin: 18px 0 26px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.album-toolbar .album-actions {
+  margin: 0;
+}
+
+.album-toolbar-note {
+  margin: 0;
+  color: rgb(255 255 255 / 76%);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.album-page-v2 .section-heading {
+  margin: 0 0 18px;
+}
+
+.album-page-v2 .section-heading h2 {
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.album-page-v2 .album-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.album-page-v2 .album-card {
+  border-radius: 16px;
+}
+
+.album-page-v2 .album-card:first-child .cover,
+.album-page-v2 .cover {
+  aspect-ratio: 4 / 3;
+}
+
+.album-page-v2 .album-card .body {
+  padding: 18px 18px 20px;
+}
+
+.album-page-v2 .album-card h3 {
+  margin-bottom: 10px;
+  font-size: clamp(1.18rem, 1.6vw, 1.45rem);
+  line-height: 1.35;
+}
+
+.album-page-v2 .album-card p,
+.album-page-v2 .empty p {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.album-page-v2 .photo-pill {
+  right: 14px;
+  bottom: 14px;
+  font-size: 0.92rem;
+}
+
+.album-page-v2 .media-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.album-page-v2 .panel {
+  padding: clamp(18px, 3vw, 28px);
+}
+
+@media (max-width: 1080px) {
+  .album-page-v2 .album-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .album-page-v2 .media-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .album-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .album-hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .album-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .album-page-v2 .album-grid,
+  .album-page-v2 .media-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .album-shell {
+    width: min(100% - 18px, 680px);
+  }
+
+  .album-hero,
+  .album-toolbar {
+    border-radius: 14px;
+  }
+
+  .album-hero-stats {
+    gap: 10px;
+  }
+
+  .album-hero-stats div {
+    min-width: 0;
+    padding: 14px;
+  }
+}

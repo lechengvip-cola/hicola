@@ -31,22 +31,14 @@
         </form>
       </section>
 
-      <section id="albumView" class="album-page" hidden>
-        <aside class="album-intro glass">
-          <p class="eyebrow">Family Album</p>
-          <h1>可乐的成长相册</h1>
-          <p>
-            按时间整理旅行、日常与成长瞬间。每一本相册都像一张小小机票，
-            记录热爱，也记录每一次出发。
-          </p>
-
-          <div class="album-actions">
-            <button class="tab active" data-view="all">全部相册</button>
-            <button class="tab" data-view="favorites">精选照片</button>
-            <select id="yearSelect" class="tab" aria-label="年份筛选"></select>
+      <section id="albumView" class="album-page album-page-v2" hidden>
+        <section class="album-hero glass">
+          <div class="album-hero-copy">
+            <p class="eyebrow">成长相册</p>
+            <h1>可乐的成长相册</h1>
+            <p>把旅行、生日、日常和每一次闪光，慢慢收进这里。</p>
           </div>
-
-          <div class="album-summary">
+          <div class="album-hero-stats" aria-label="相册统计">
             <div>
               <span>相册</span>
               <strong id="eventCount">0</strong>
@@ -56,12 +48,21 @@
               <strong id="favoriteCount">0</strong>
             </div>
           </div>
-        </aside>
+        </section>
+
+        <section class="album-toolbar glass" aria-label="相册筛选">
+          <div class="album-actions">
+            <button class="tab active" data-view="all">全部相册</button>
+            <button class="tab" data-view="favorites">精选照片</button>
+            <select id="yearSelect" class="tab" aria-label="按年份筛选"></select>
+          </div>
+          <p class="album-toolbar-note">按时间整理成长瞬间，点击相册即可查看照片。</p>
+        </section>
 
         <section class="album-content">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Moments</p>
+              <p class="eyebrow">相册列表</p>
               <h2 id="viewTitle">全部相册</h2>
             </div>
           </div>

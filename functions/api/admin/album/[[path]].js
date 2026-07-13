@@ -1,15 +1,26 @@
-import { getAdminEmail, updateFamilyPassword } from "../../../_lib/album/auth.js";
+import { clearAdminCookie, createAdminCookie, getAdminEmail, updateFamilyPassword, verifyAdminCookie, verifyAdminPassword } from "../../../_lib/album/auth.js";
 import { eventSummarySql, getSettings, nowIso, publicSettings, uuid } from "../../../_lib/album/db.js";
 import { assertAllowedFile, extensionOf, mediaTypeOf, objectKeys } from "../../../_lib/album/media.js";
 import { error, methodNotAllowed, notFound, ok, readJson } from "../../../_lib/album/response.js";
 
 const partsOf = (context) => context.params.path || [];
 
-const requireAdmin = (request, env) => {
-  const email = getAdminEmail(request, env);
-  if (!email) return { response: error("ADMIN_REQUIRED", "需要管理员权限。", 401) };
-  return { email };
+const requireAdminSession = async (request, env) => {
+  const access = getAdminEmail(request, env);
+  if (access) return { email: access };
+  if (await verifyAdminCookie(request, env)) return { email: "album-admin" };
+  return { response: error("ADMIN_REQUIRED", "需要管理员权限。", 401) };
 };
+
+const adminLogin = async (env, request) => {
+  const body = await readJson(request);
+  if (!(await verifyAdminPassword(env, String(body.password || "")))) {
+    return error("ADMIN_PASSWORD_ERROR", "管理员密码错误。", 401);
+  }
+  return ok({ authenticated: true }, { headers: { "set-cookie": await createAdminCookie(env) } });
+};
+
+const adminLogout = () => ok({}, { headers: { "set-cookie": clearAdminCookie() } });
 
 const dateParts = (dateText) => {
   const raw = String(dateText || nowIso()).slice(0, 10);
@@ -123,7 +134,30 @@ const completeUpload = async (env, request) => {
   const maxSize = Number(env.MAX_UPLOAD_SIZE || 52428800);
   assertAllowedFile(file, maxSize);
 
-  const duplicate = await env.DB.prepare("SELECT id, event_id FROM album_media WHERE sha256 = ? AND deleted_at IS NULL").bind(sha256).first();
+  await env.DB.prepare(
+    `UPDATE album_media
+     SET deleted_at = ?, updated_at = ?
+     WHERE sha256 = ?
+       AND deleted_at IS NULL
+       AND event_id IN (
+         SELECT id FROM album_events
+         WHERE deleted_at IS NOT NULL OR status = 'hidden'
+       )`,
+  )
+    .bind(nowIso(), nowIso(), sha256)
+    .run();
+
+  const duplicate = await env.DB.prepare(
+    `SELECT m.id, m.event_id
+     FROM album_media m
+     JOIN album_events e ON e.id = m.event_id
+     WHERE m.sha256 = ?
+       AND m.deleted_at IS NULL
+       AND e.deleted_at IS NULL
+       AND e.status IN ('draft', 'published')`,
+  )
+    .bind(sha256)
+    .first();
   if (duplicate) {
     await env.DB.prepare("UPDATE upload_batches SET duplicate_files = duplicate_files + 1 WHERE id = ?").bind(batchId).run();
     return ok({ duplicate: true, mediaId: duplicate.id, eventId: duplicate.event_id });
@@ -269,6 +303,15 @@ const softDelete = async (env, table, id) => {
   return ok();
 };
 
+const softDeleteEvent = async (env, id) => {
+  const now = nowIso();
+  await env.DB.prepare("UPDATE album_events SET deleted_at = ?, updated_at = ? WHERE id = ?").bind(now, now, id).run();
+  await env.DB.prepare("UPDATE album_media SET deleted_at = ?, updated_at = ? WHERE event_id = ? AND deleted_at IS NULL")
+    .bind(now, now, id)
+    .run();
+  return ok();
+};
+
 const adminMedia = async (env, id, kind) => {
   const row = await env.DB.prepare("SELECT * FROM album_media WHERE id = ? AND deleted_at IS NULL").bind(id).first();
   if (!row) return notFound();
@@ -287,9 +330,11 @@ export async function onRequest(context) {
   if (!env.DB) {
     return error("ALBUM_NOT_CONFIGURED", "请先绑定 D1 数据库。", 503);
   }
-  const admin = requireAdmin(request, env);
-  if (admin.response) return admin.response;
   const parts = partsOf(context);
+  if (request.method === "POST" && parts[0] === "auth" && parts[1] === "login") return adminLogin(env, request);
+  if (request.method === "POST" && parts[0] === "auth" && parts[1] === "logout") return adminLogout();
+  const admin = await requireAdminSession(request, env);
+  if (admin.response) return admin.response;
   try {
     if (request.method === "GET" && parts[0] === "security") return security(env);
     if (request.method === "POST" && parts[0] === "security" && parts[1] === "password") return setPassword(env, request, admin.email);
@@ -309,7 +354,7 @@ export async function onRequest(context) {
     if (request.method === "PATCH" && parts[0] === "events" && parts[1]) return updateEvent(env, request, parts[1]);
     if (request.method === "POST" && parts[0] === "events" && parts[1] && parts[2] === "merge") return mergeEvent(env, request, parts[1]);
     if (request.method === "POST" && parts[0] === "events" && parts[1] && parts[2] === "split") return splitEvent(env, request, parts[1]);
-    if (request.method === "DELETE" && parts[0] === "events" && parts[1]) return softDelete(env, "album_events", parts[1]);
+    if (request.method === "DELETE" && parts[0] === "events" && parts[1]) return softDeleteEvent(env, parts[1]);
     if (request.method === "PATCH" && parts[0] === "media" && parts[1]) return updateMedia(env, request, parts[1]);
     if (request.method === "DELETE" && parts[0] === "media" && parts[1]) return softDelete(env, "album_media", parts[1]);
     if (request.method === "GET" && parts[0] === "media" && parts[1] && parts[2]) {

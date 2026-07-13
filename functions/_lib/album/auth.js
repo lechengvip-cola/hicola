@@ -1,7 +1,8 @@
-import { clientIpHash, hashPassword, randomHex, sha256Hex, summarizeUserAgent, timingSafeEqual } from "./crypto.js";
+import { clientIpHash, hashPassword, hashPasswordPbkdf2, randomHex, sha256Hex, timingSafeEqual } from "./crypto.js";
 import { getSettings, nowIso, publicSettings, uuid } from "./db.js";
 
 const cookieName = "hicola_album_session";
+const adminCookieName = "hicola_album_admin";
 
 export const parseCookies = (request) => {
   const header = request.headers.get("cookie") || "";
@@ -33,6 +34,39 @@ export const sessionCookie = (token, expiresAt, remember) => {
 
 export const clearSessionCookie = () =>
   `${cookieName}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+
+const adminSignature = async (payload, secret) => sha256Hex(`${payload}.${secret || "hicola-admin"}`);
+
+const familySignature = async (payload, env) =>
+  sha256Hex(`${payload}.${env.SESSION_SECRET || env.ADMIN_ALBUM_PASSWORD || "hicola-family"}`);
+
+export const createAdminCookie = async (env) => {
+  const expiresAt = Date.now() + 12 * 60 * 60 * 1000;
+  const payload = `${expiresAt}.${randomHex(16)}`;
+  const signature = await adminSignature(payload, env.SESSION_SECRET || env.ADMIN_ALBUM_PASSWORD || "hicola-admin");
+  return [
+    `${adminCookieName}=${encodeURIComponent(`${payload}.${signature}`)}`,
+    "Path=/",
+    "HttpOnly",
+    "Secure",
+    "SameSite=Lax",
+    "Max-Age=43200",
+  ].join("; ");
+};
+
+export const clearAdminCookie = () =>
+  `${adminCookieName}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+
+export const verifyAdminCookie = async (request, env) => {
+  const token = parseCookies(request)[adminCookieName];
+  if (!token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  const payload = `${parts[0]}.${parts[1]}`;
+  if (Number(parts[0]) < Date.now()) return false;
+  const expected = await adminSignature(payload, env.SESSION_SECRET || env.ADMIN_ALBUM_PASSWORD || "hicola-admin");
+  return timingSafeEqual(expected, parts[2]);
+};
 
 export const validatePasswordInput = (password) =>
   typeof password === "string" && password.length >= 6 && password.length <= 64 && password.trim().length > 0;
@@ -71,34 +105,24 @@ export const updateFamilyPassword = async (env, password, adminEmail) => {
 };
 
 export const verifyPassword = async (settings, password) => {
+  if (settings.family_plain_password && timingSafeEqual(String(settings.family_plain_password), password)) return true;
   if (!settings.family_password_hash || !settings.family_password_salt) return false;
-  const hashed = await hashPassword(password, settings.family_password_salt, Number(settings.family_password_iterations || 120000));
+  const iterations = Number(settings.family_password_iterations || 1);
+  const hasher = settings.family_password_algorithm === "PBKDF2-SHA-256" ? hashPasswordPbkdf2 : hashPassword;
+  const hashed = await hasher(password, settings.family_password_salt, iterations);
   return timingSafeEqual(hashed.hash, settings.family_password_hash);
 };
 
 export const createFamilySession = async (env, request, remember) => {
   const settings = await getSettings(env);
-  const token = `${randomHex(32)}.${randomHex(16)}`;
-  const tokenHash = await sha256Hex(token);
   const days = Math.min(30, Math.max(1, Number(settings.family_session_days || 30)));
   const expiresAt = new Date(Date.now() + days * 86400000).toISOString();
-  const now = nowIso();
-  await env.DB.prepare(
-    `INSERT INTO family_sessions
-     (id, session_token_hash, password_version, created_at, expires_at, last_active_at, ip_hash, user_agent_summary)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  )
-    .bind(
-      uuid(),
-      tokenHash,
-      Number(settings.family_password_version || 1),
-      now,
-      expiresAt,
-      now,
-      await clientIpHash(request, env.SESSION_SECRET || "hicola-album"),
-      summarizeUserAgent(request.headers.get("user-agent") || ""),
-    )
-    .run();
+  const payload = [
+    Number(settings.family_password_version || 1),
+    new Date(expiresAt).getTime(),
+    randomHex(16),
+  ].join(".");
+  const token = `${payload}.${await familySignature(payload, env)}`;
   return { token, expiresAt, cookie: sessionCookie(token, expiresAt, remember) };
 };
 
@@ -109,17 +133,14 @@ export const verifyFamilySession = async (env, request) => {
   if (!settings.family_access_enabled) return { ...status, reason: "disabled" };
   const token = parseCookies(request)[cookieName];
   if (!token) return { ...status, reason: "missing" };
-  const tokenHash = await sha256Hex(token);
-  const session = await env.DB.prepare(
-    `SELECT * FROM family_sessions
-     WHERE session_token_hash = ? AND revoked_at IS NULL AND expires_at > ?`,
-  )
-    .bind(tokenHash, nowIso())
-    .first();
-  if (!session) return { ...status, reason: "invalid" };
-  if (Number(session.password_version) !== Number(settings.family_password_version)) return { ...status, reason: "password_changed" };
-  await env.DB.prepare("UPDATE family_sessions SET last_active_at = ? WHERE id = ?").bind(nowIso(), session.id).run();
-  return { authenticated: true, settings: publicSettings(settings), session };
+  const parts = token.split(".");
+  if (parts.length !== 4) return { ...status, reason: "invalid" };
+  const payload = parts.slice(0, 3).join(".");
+  const [version, expiresAt] = parts;
+  if (Number(expiresAt) <= Date.now()) return { ...status, reason: "expired" };
+  if (Number(version) !== Number(settings.family_password_version)) return { ...status, reason: "password_changed" };
+  if (!timingSafeEqual(await familySignature(payload, env), parts[3])) return { ...status, reason: "invalid" };
+  return { authenticated: true, settings: publicSettings(settings), session: { password_version: Number(version) } };
 };
 
 export const recordLoginFailure = async (env, request) => {
@@ -162,4 +183,10 @@ export const getAdminEmail = (request, env) => {
     return "dev-admin@local";
   }
   return null;
+};
+
+export const verifyAdminPassword = async (env, password) => {
+  const configured = env.ADMIN_ALBUM_PASSWORD;
+  if (!configured || typeof password !== "string") return false;
+  return timingSafeEqual(configured, password);
 };

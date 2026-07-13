@@ -9,7 +9,8 @@ const password = "family-pass-123";
 const hashed = await cryptoModule.hashPassword(password);
 const rehashed = await cryptoModule.hashPassword(password, hashed.salt, hashed.iterations);
 
-assert.equal(hashed.algorithm, "PBKDF2-SHA-256");
+assert.equal(hashed.algorithm, "SHA-256");
+assert.equal(hashed.iterations, 1);
 assert.equal(cryptoModule.timingSafeEqual(hashed.hash, rehashed.hash), true);
 assert.equal(cryptoModule.timingSafeEqual(hashed.hash, "0".repeat(hashed.hash.length)), false);
 assert.equal(authModule.validatePasswordInput("      "), false);

@@ -3,7 +3,7 @@ const encoder = new TextEncoder();
 export const toHex = (buffer) =>
   [...new Uint8Array(buffer)].map((value) => value.toString(16).padStart(2, "0")).join("");
 
-export const fromHex = (hex) => {
+const fromHex = (hex) => {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i += 1) bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   return bytes;
@@ -20,7 +20,17 @@ export const sha256Hex = async (value) => {
   return toHex(await crypto.subtle.digest("SHA-256", input));
 };
 
-export const hashPassword = async (password, saltHex = randomHex(16), iterations = 120000) => {
+export const hashPassword = async (password, saltHex = randomHex(16), iterations = 1) => {
+  const bits = await crypto.subtle.digest("SHA-256", encoder.encode(`${saltHex}:${password}`));
+  return {
+    hash: toHex(bits),
+    salt: saltHex,
+    iterations,
+    algorithm: "SHA-256",
+  };
+};
+
+export const hashPasswordPbkdf2 = async (password, saltHex = randomHex(16), iterations = 1) => {
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits(
     {

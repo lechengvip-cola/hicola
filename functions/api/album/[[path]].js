@@ -1,4 +1,4 @@
-import { clearSessionCookie, clearLoginFailures, createFamilySession, isLoginLocked, parseCookies, recordLoginFailure, verifyFamilySession, verifyPassword } from "../../_lib/album/auth.js";
+import { clearSessionCookie, clearLoginFailures, createFamilySession, isLoginLocked, recordLoginFailure, verifyFamilySession, verifyPassword } from "../../_lib/album/auth.js";
 import { eventSummarySql, getSettings, publicSettings } from "../../_lib/album/db.js";
 import { error, json, methodNotAllowed, noStoreHeaders, notFound, ok, readJson } from "../../_lib/album/response.js";
 
@@ -30,7 +30,11 @@ const login = async (env, request) => {
   const body = await readJson(request);
   const password = String(body.password || "");
   const remember = Boolean(body.remember);
-  if (!(await verifyPassword(settings, password))) {
+  const passwordSettings = {
+    ...settings,
+    family_plain_password: env.ALBUM_FAMILY_PASSWORD || env.ADMIN_ALBUM_PASSWORD || "",
+  };
+  if (!(await verifyPassword(passwordSettings, password))) {
     await recordLoginFailure(env, request);
     return error("PASSWORD_ERROR", "密码错误，请重新输入。", 401);
   }
@@ -39,14 +43,7 @@ const login = async (env, request) => {
   return ok({ authenticated: true, settings: publicSettings(settings) }, { headers: { "set-cookie": session.cookie } });
 };
 
-const logout = async (env, request) => {
-  const token = parseCookies(request).hicola_album_session;
-  if (token) {
-    const { sha256Hex } = await import("../../_lib/album/crypto.js");
-    await env.DB.prepare("UPDATE family_sessions SET revoked_at = ? WHERE session_token_hash = ?")
-      .bind(new Date().toISOString(), await sha256Hex(token))
-      .run();
-  }
+const logout = async () => {
   return ok({}, { headers: { "set-cookie": clearSessionCookie() } });
 };
 
@@ -147,7 +144,7 @@ export async function onRequest(context) {
     }
     if (request.method === "GET" && parts[0] === "auth" && parts[1] === "status") return authStatus(env, request);
     if (request.method === "POST" && parts[0] === "auth" && parts[1] === "login") return login(env, request);
-    if (request.method === "POST" && parts[0] === "auth" && parts[1] === "logout") return logout(env, request);
+    if (request.method === "POST" && parts[0] === "auth" && parts[1] === "logout") return logout();
     if (request.method === "GET" && parts[0] === "events" && !parts[1]) return listEvents(env, request);
     if (request.method === "GET" && parts[0] === "events" && parts[1]) return eventDetail(env, request, parts[1]);
     if (request.method === "GET" && parts[0] === "years") return years(env, request);

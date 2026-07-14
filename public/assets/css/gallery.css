@@ -238,6 +238,11 @@ h1 {
   padding: 24px;
 }
 
+.login-card {
+  max-width: 560px;
+  margin: 8vh auto 0;
+}
+
 .capacity {
   display: grid;
   gap: 12px;
@@ -426,6 +431,26 @@ h1 {
   background: rgb(255 255 255 / 9%);
 }
 
+.security-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.security-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.security-form input {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  color: #fff;
+  background: rgb(0 0 0 / 20%);
+}
+
 @media (max-width: 900px) {
   .hero,
   .admin-grid {
@@ -465,5 +490,9 @@ h1 {
 
   .selection-toolbar {
     position: static;
+  }
+
+  .security-form {
+    grid-template-columns: 1fr;
   }
 }

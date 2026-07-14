@@ -1,4 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
+
 const state = { photos: [], storage: null, selected: new Set(), month: "all" };
 
 const api = async (url, options = {}) => {
@@ -19,6 +20,7 @@ const sizeText = (bytes = 0) => {
 };
 
 const monthKey = (photo) => `${photo.year}-${String(photo.month).padStart(2, "0")}`;
+
 const monthName = (key) => {
   const [year, month] = key.split("-");
   return `${year} 年 ${Number(month)} 月`;
@@ -41,7 +43,7 @@ const renderSummary = () => {
   const visible = visiblePhotos();
   const selected = selectedPhotos();
   const selectedSize = selected.reduce((sum, photo) => sum + Number(photo.size || 0), 0);
-  $("#selectionSummary").textContent = `当前显示 ${visible.length} 张，已选 ${selected.length} 张。`;
+  $("#selectionSummary").textContent = `当前显示 ${visible.length} 张，已选择 ${selected.length} 张。`;
   $("#selectedSize").textContent = sizeText(selectedSize);
 };
 
@@ -57,6 +59,7 @@ const render = () => {
 
   renderMonthFilter();
   renderSummary();
+
   const photos = visiblePhotos();
   $("#adminPhotos").innerHTML = photos.length
     ? photos
@@ -73,6 +76,14 @@ const render = () => {
     : `<div class="empty glass"><h2>当前筛选没有照片</h2><p class="muted">可以切换月份或上传新照片。</p></div>`;
 };
 
+const loadSecurity = async () => {
+  const data = await api("/api/admin/gallery/security");
+  const security = data.security || {};
+  $("#securityStatus").textContent = security.passwordCustomized
+    ? `已启用自定义后台密码。上次修改：${security.passwordUpdatedAt || "未知"}。${security.lockPolicy || ""}`
+    : `当前使用初始环境密码。建议在这里设置一个新的后台密码。${security.lockPolicy || ""}`;
+};
+
 const load = async () => {
   const data = await api("/api/admin/gallery");
   state.photos = data.photos || [];
@@ -84,7 +95,7 @@ const load = async () => {
 const showApp = async () => {
   $("#loginPanel").hidden = true;
   $("#workPanel").hidden = false;
-  await load();
+  await Promise.all([load(), loadSecurity()]);
 };
 
 const checkAuth = async () => {
@@ -94,15 +105,46 @@ const checkAuth = async () => {
 
 $("#loginBtn").addEventListener("click", async () => {
   try {
+    $("#loginError").textContent = "";
     await api("/api/admin/gallery/auth/login", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ password: $("#adminPassword").value.trim() }),
     });
+    $("#adminPassword").value = "";
     await showApp();
   } catch (err) {
     $("#loginError").textContent = err.message || "登录失败";
   }
+});
+
+$("#adminPassword").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") $("#loginBtn").click();
+});
+
+$("#changePasswordBtn").addEventListener("click", async () => {
+  const currentPassword = $("#currentPassword").value;
+  const newPassword = $("#newAdminPassword").value;
+  const confirmPassword = $("#confirmAdminPassword").value;
+  try {
+    await api("/api/admin/gallery/security/password", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+    });
+    $("#currentPassword").value = "";
+    $("#newAdminPassword").value = "";
+    $("#confirmAdminPassword").value = "";
+    toast("后台密码已修改，当前设备已自动换成新会话。");
+    await loadSecurity();
+  } catch (err) {
+    toast(err.message || "修改密码失败");
+  }
+});
+
+$("#adminLogoutBtn").addEventListener("click", async () => {
+  await api("/api/admin/gallery/auth/logout", { method: "POST" }).catch(() => {});
+  location.reload();
 });
 
 const uploadFiles = async (files) => {
@@ -121,6 +163,7 @@ const uploadFiles = async (files) => {
     toast(`已上传 ${done} / ${images.length}`);
   }
   toast("上传完成。");
+  $("#fileInput").value = "";
   await load();
 };
 

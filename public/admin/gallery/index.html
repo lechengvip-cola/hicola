@@ -9,10 +9,11 @@
   <body>
     <main class="page">
       <header class="topbar"><a class="btn" href="/gallery/">查看照片墙</a></header>
-      <section id="loginPanel" class="panel glass" style="max-width: 520px; margin: 8vh auto 0">
+
+      <section id="loginPanel" class="panel glass login-card">
         <p class="eyebrow">后台管理</p>
         <h1>成长照片库</h1>
-        <p class="lead">输入管理员密码后，可以上传、导出和清理照片。</p>
+        <p class="lead">输入管理员密码后，可以上传、导出、清理照片，并维护后台安全设置。</p>
         <div class="form-line">
           <input id="adminPassword" type="password" placeholder="管理员密码" autocomplete="current-password" />
           <button id="loginBtn" class="btn primary" type="button">进入后台</button>
@@ -25,7 +26,7 @@
           <div>
             <p class="eyebrow">成长照片库</p>
             <h1>照片管理</h1>
-            <p class="lead">照片统一进入成长照片库，系统按年份和月份自动整理。</p>
+            <p class="lead">照片统一进入成长照片库，系统按年份和月份自动整理。归档前先导出 ZIP，备份到百度网盘后再删除 R2 旧照片。</p>
           </div>
           <div class="stat">
             <span>照片数量</span>
@@ -54,6 +55,24 @@
           </section>
         </section>
 
+        <section class="panel glass security-panel" style="margin-top: 18px">
+          <div class="manager-head">
+            <div>
+              <p class="eyebrow">后台安全</p>
+              <h2>密码与登录防护</h2>
+              <p id="securityStatus" class="muted">正在读取安全状态...</p>
+            </div>
+            <button id="adminLogoutBtn" class="btn" type="button">退出后台</button>
+          </div>
+          <div class="security-form">
+            <input id="currentPassword" type="password" placeholder="当前管理员密码" autocomplete="current-password" />
+            <input id="newAdminPassword" type="password" placeholder="新管理员密码，6 到 64 位" autocomplete="new-password" />
+            <input id="confirmAdminPassword" type="password" placeholder="再次输入新密码" autocomplete="new-password" />
+            <button id="changePasswordBtn" class="btn primary" type="button">修改后台密码</button>
+          </div>
+          <p class="muted">密码只保存加盐哈希，不保存明文。连续 5 次输错会临时锁定 10 分钟。修改密码后旧后台会话会自动失效。</p>
+        </section>
+
         <section class="panel glass" style="margin-top: 18px">
           <h2>照片归档</h2>
           <div class="form-line">
@@ -69,7 +88,7 @@
             <div>
               <p class="eyebrow">批量管理</p>
               <h2>成长照片库</h2>
-              <p id="selectionSummary" class="muted">当前 0 张，已选 0 张。</p>
+              <p id="selectionSummary" class="muted">当前显示 0 张，已选择 0 张。</p>
             </div>
             <div class="selection-total">
               <span>已选容量</span>
@@ -88,7 +107,7 @@
           </div>
 
           <div class="selection-help">
-            可点击照片卡片任意位置进行选择。归档前建议先按月份筛选，再全选当前月份导出 ZIP，上传百度网盘后再删除。
+            点击照片卡片任意位置即可选择。建议先按月份筛选，再全选当前月份导出 ZIP，备份到百度网盘后再删除。
           </div>
 
           <div id="adminPhotos" class="admin-list"></div>

@@ -1,5 +1,17 @@
-import { clearAdminCookie, createAdminCookie, getAdminEmail, verifyAdminCookie, verifyAdminPassword } from "../../../_lib/album/auth.js";
+﻿import { getAdminEmail } from "../../../_lib/album/auth.js";
 import { error, methodNotAllowed, notFound, ok, readJson } from "../../../_lib/album/response.js";
+import {
+  changeGalleryPassword,
+  clearGalleryAdminCookie,
+  clearGalleryLoginFailures,
+  createGalleryAdminCookie,
+  isGalleryLoginLocked,
+  publicGallerySecurity,
+  readGallerySecurity,
+  recordGalleryLoginFailure,
+  verifyGalleryAdminCookie,
+  verifyGalleryPassword,
+} from "../../../_lib/gallery/security.js";
 import { extensionOf, listStorage, nowInZone, photoUrl, readPhotos, safeName, writePhotos } from "../../../_lib/gallery/store.js";
 
 const partsOf = (context) => context.params.path || [];
@@ -7,22 +19,45 @@ const partsOf = (context) => context.params.path || [];
 const requireAdmin = async (request, env) => {
   const email = getAdminEmail(request, env);
   if (email) return { email };
-  if (await verifyAdminCookie(request, env)) return { email: "gallery-admin" };
+  if (await verifyGalleryAdminCookie(request, env)) return { email: "gallery-admin" };
   return { response: error("ADMIN_REQUIRED", "需要管理员权限。", 401) };
 };
 
-const authStatus = async (request, env) => ok({ authenticated: Boolean(getAdminEmail(request, env) || (await verifyAdminCookie(request, env))) });
+const authStatus = async (request, env) => ok({ authenticated: Boolean(getAdminEmail(request, env) || (await verifyGalleryAdminCookie(request, env))) });
 
 const login = async (request, env) => {
   const body = await readJson(request);
-  if (!(await verifyAdminPassword(env, String(body.password || "").trim()))) {
+  if (await isGalleryLoginLocked(env, request)) {
+    return error("ADMIN_LOGIN_LOCKED", "密码错误次数过多，请 10 分钟后再试。", 429);
+  }
+  if (!(await verifyGalleryPassword(env, String(body.password || "").trim()))) {
+    await recordGalleryLoginFailure(env, request);
     return error("ADMIN_PASSWORD_ERROR", "管理员密码错误。", 401);
   }
-  return ok({ authenticated: true }, { headers: { "set-cookie": await createAdminCookie(env) } });
+  await clearGalleryLoginFailures(env, request);
+  return ok({ authenticated: true }, { headers: { "set-cookie": await createGalleryAdminCookie(env) } });
 };
 
-const logout = () => ok({}, { headers: { "set-cookie": clearAdminCookie() } });
+const logout = () => ok({}, { headers: { "set-cookie": clearGalleryAdminCookie() } });
 
+const securityStatus = async (env) => ok({ security: publicGallerySecurity(await readGallerySecurity(env)) });
+
+const updatePassword = async (request, env) => {
+  const body = await readJson(request);
+  const currentPassword = String(body.currentPassword || "");
+  const newPassword = String(body.newPassword || "");
+  const confirmPassword = String(body.confirmPassword || "");
+  if (newPassword !== confirmPassword) return error("PASSWORD_CONFIRM_ERROR", "两次输入的新密码不一致。", 400);
+  try {
+    const security = await changeGalleryPassword(env, currentPassword, newPassword);
+    return ok(
+      { security: publicGallerySecurity(security) },
+      { headers: { "set-cookie": await createGalleryAdminCookie(env) } },
+    );
+  } catch (err) {
+    return error("PASSWORD_CHANGE_FAILED", err.message || "后台密码修改失败。", 400);
+  }
+};
 const dashboard = async (env) => {
   const [photos, storage] = await Promise.all([readPhotos(env), listStorage(env)]);
   return ok({ photos, storage });
@@ -275,6 +310,8 @@ export async function onRequest(context) {
     const guard = await requireAdmin(request, env);
     if (guard.response) return guard.response;
     if (request.method === "GET" && !parts[0]) return dashboard(env);
+    if (request.method === "GET" && parts[0] === "security") return securityStatus(env);
+    if (request.method === "POST" && parts[0] === "security" && parts[1] === "password") return updatePassword(request, env);
     if (request.method === "POST" && parts[0] === "import-legacy") return importLegacy(env);
     if (request.method === "POST" && parts[0] === "upload") return upload(request, env);
     if (request.method === "POST" && parts[0] === "delete") return remove(request, env);
@@ -284,3 +321,4 @@ export async function onRequest(context) {
     return error("GALLERY_ADMIN_ERROR", "成长照片库后台暂时不可用。", 500);
   }
 }
+

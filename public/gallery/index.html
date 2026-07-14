@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>可乐成长相册</title>
+    <link rel="stylesheet" href="/assets/css/gallery.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar"><a class="btn" href="/">返回首页</a></header>
+      <section class="hero glass">
+        <div>
+          <p class="eyebrow">成长相册</p>
+          <h1>可乐成长相册</h1>
+          <p class="lead">记录成长中的每一个精彩瞬间。</p>
+        </div>
+        <div class="stat">
+          <span>照片数量</span>
+          <strong id="photoCount">0</strong>
+        </div>
+      </section>
+      <nav id="filters" class="toolbar glass" aria-label="按月份筛选"></nav>
+      <section id="photoWall" class="masonry"></section>
+    </main>
+    <div id="lightbox" class="lightbox">
+      <button id="closeLightbox" class="btn close" type="button">关闭</button>
+      <img id="lightboxImage" alt="" />
+    </div>
+    <script src="/assets/js/gallery.js" type="module"></script>
+  </body>
+</html>
+

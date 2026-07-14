@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>成长照片库后台</title>
+    <link rel="stylesheet" href="/assets/css/gallery.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar"><a class="btn" href="/gallery/">查看照片墙</a></header>
+      <section id="loginPanel" class="panel glass" style="max-width: 520px; margin: 8vh auto 0">
+        <p class="eyebrow">后台管理</p>
+        <h1>成长照片库</h1>
+        <p class="lead">输入管理员密码后，可以上传、导出和清理照片。</p>
+        <div class="form-line">
+          <input id="adminPassword" type="password" placeholder="管理员密码" autocomplete="current-password" />
+          <button id="loginBtn" class="btn primary" type="button">进入后台</button>
+        </div>
+        <p id="loginError" class="muted"></p>
+      </section>
+
+      <section id="workPanel" hidden>
+        <section class="hero glass">
+          <div>
+            <p class="eyebrow">成长照片库</p>
+            <h1>照片管理</h1>
+            <p class="lead">照片统一进入成长照片库，系统按年份和月份自动整理。</p>
+          </div>
+          <div class="stat">
+            <span>照片数量</span>
+            <strong id="totalPhotos">0</strong>
+          </div>
+        </section>
+
+        <section class="admin-grid" style="margin-top: 18px">
+          <aside id="capacity" class="panel glass capacity">
+            <h2>R2 存储容量</h2>
+            <strong id="capacityText">0 GB / 10 GB</strong>
+            <div class="bar"><span id="capacityBar"></span></div>
+            <p id="capacityMessage" class="muted">状态：正常</p>
+          </aside>
+          <section class="panel glass">
+            <h2>上传照片</h2>
+            <div id="dropZone" class="upload-zone">
+              <div>
+                <h3>把照片拖到这里</h3>
+                <p class="muted">支持 JPG、PNG、WebP、HEIC</p>
+                <button id="pickFiles" class="btn primary" type="button">选择照片上传</button>
+                <input id="fileInput" type="file" accept="image/*" multiple hidden />
+              </div>
+            </div>
+            <p id="toast" class="muted"></p>
+          </section>
+        </section>
+
+        <section class="panel glass" style="margin-top: 18px">
+          <h2>照片归档</h2>
+          <div class="form-line">
+            <input id="exportYear" type="number" placeholder="年份，例如 2026" min="2000" max="2100" />
+            <button id="exportBtn" class="btn primary" type="button">导出 ZIP</button>
+            <button id="deleteBtn" class="btn danger" type="button">删除已备份照片</button>
+          </div>
+          <p class="muted">ZIP 下载后，请人工上传百度网盘完成长期备份，再删除 R2 旧照片。</p>
+        </section>
+
+        <section class="panel glass" style="margin-top: 18px">
+          <h2>成长照片库</h2>
+          <div id="adminPhotos" class="admin-list"></div>
+        </section>
+      </section>
+    </main>
+    <script src="/assets/js/gallery-admin.js" type="module"></script>
+  </body>
+</html>
+

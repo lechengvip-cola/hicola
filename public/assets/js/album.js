@@ -30,6 +30,8 @@ const escapeHtml = (value = "") =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
+const normalizePassword = (value = "") => String(value).replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+
 const formatDateCn = (value = "") => {
   const [year, month, day] = value.split("-");
   return year && month && day ? `${year} 年 ${Number(month)} 月 ${Number(day)} 日` : value;
@@ -111,7 +113,7 @@ const renderEvents = (events) => {
         : `<div class="cover">暂无封面</div>`;
 
       return `
-        <a class="album-card glass" href="#" data-event-id="${event.id}">
+        <button class="album-card glass" type="button" data-event-id="${event.id}" aria-label="查看${title}">
           <div class="album-cover-wrap">
             ${cover}
             <span class="photo-pill">${countText}</span>
@@ -120,7 +122,7 @@ const renderEvents = (events) => {
             <h3>${title}</h3>
             <p class="muted">${date} · ${countText}</p>
           </div>
-        </a>`;
+        </button>`;
     })
     .join("");
 };
@@ -204,10 +206,12 @@ const moveLightbox = (step) => {
 $("#loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   $("#loginToast").textContent = "";
+  const password = normalizePassword($("#passwordInput").value);
+  $("#passwordInput").value = password;
   try {
     await api("/api/album/auth/login", {
       method: "POST",
-      body: JSON.stringify({ password: $("#passwordInput").value, remember: $("#rememberDevice").checked }),
+      body: JSON.stringify({ password, remember: $("#rememberDevice").checked }),
     });
     await checkStatus();
   } catch (err) {
@@ -223,7 +227,17 @@ document.addEventListener("click", async (event) => {
   const card = event.target.closest("[data-event-id]");
   if (card) {
     event.preventDefault();
-    await showDetail(card.dataset.eventId);
+    try {
+      await showDetail(card.dataset.eventId);
+    } catch (err) {
+      const content = $("#eventsPanel");
+      if (content) {
+        content.insertAdjacentHTML(
+          "afterbegin",
+          `<div class="toast glass album-inline-toast">相册打开失败，请刷新页面后再试。</div>`,
+        );
+      }
+    }
   }
 
   const media = event.target.closest("[data-media-index]");

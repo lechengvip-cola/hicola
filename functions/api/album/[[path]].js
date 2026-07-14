@@ -4,6 +4,8 @@ import { error, json, methodNotAllowed, noStoreHeaders, notFound, ok, readJson }
 
 const routeParts = (context) => context.params.path || [];
 
+const normalizePassword = (value = "") => String(value).replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+
 const authStatus = async (env, request) => {
   if (!env.DB) {
     return ok({
@@ -28,7 +30,7 @@ const login = async (env, request) => {
   if (!settings.family_password_hash) return error("ALBUM_NOT_OPEN", "成长相册暂未开放。", 403);
   if (!settings.family_access_enabled) return error("ALBUM_DISABLED", "成长相册暂时关闭。", 403);
   const body = await readJson(request);
-  const password = String(body.password || "");
+  const password = normalizePassword(body.password || "");
   const remember = Boolean(body.remember);
   const passwordSettings = {
     ...settings,

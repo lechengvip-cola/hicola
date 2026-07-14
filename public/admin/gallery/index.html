@@ -64,8 +64,33 @@
           <p class="muted">ZIP 下载后，请人工上传百度网盘完成长期备份，再删除 R2 旧照片。</p>
         </section>
 
-        <section class="panel glass" style="margin-top: 18px">
-          <h2>成长照片库</h2>
+        <section class="panel glass gallery-manager" style="margin-top: 18px">
+          <div class="manager-head">
+            <div>
+              <p class="eyebrow">批量管理</p>
+              <h2>成长照片库</h2>
+              <p id="selectionSummary" class="muted">当前 0 张，已选 0 张。</p>
+            </div>
+            <div class="selection-total">
+              <span>已选容量</span>
+              <strong id="selectedSize">0 KB</strong>
+            </div>
+          </div>
+
+          <div class="selection-toolbar">
+            <select id="monthFilter" class="select-pill" aria-label="按月份筛选">
+              <option value="all">全部月份</option>
+            </select>
+            <button id="selectVisible" class="btn" type="button">全选当前</button>
+            <button id="invertVisible" class="btn" type="button">反选当前</button>
+            <button id="clearSelection" class="btn" type="button">清空选择</button>
+            <button id="selectBeforeMonth" class="btn" type="button">选择更早月份</button>
+          </div>
+
+          <div class="selection-help">
+            可点击照片卡片任意位置进行选择。归档前建议先按月份筛选，再全选当前月份导出 ZIP，上传百度网盘后再删除。
+          </div>
+
           <div id="adminPhotos" class="admin-list"></div>
         </section>
       </section>
@@ -73,4 +98,3 @@
     <script src="/assets/js/gallery-admin.js" type="module"></script>
   </body>
 </html>
-

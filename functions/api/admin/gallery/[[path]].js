@@ -12,6 +12,7 @@ import {
   verifyGalleryAdminCookie,
   verifyGalleryPassword,
 } from "../../../_lib/gallery/security.js";
+import { detectPhotoDate } from "../../../_lib/gallery/dates.js";
 import { extensionOf, listStorage, nowInZone, photoUrl, readPhotos, safeName, writePhotos } from "../../../_lib/gallery/store.js";
 
 const partsOf = (context) => context.params.path || [];
@@ -110,10 +111,12 @@ const upload = async (request, env) => {
   const id = crypto.randomUUID();
   const filename = safeName(file.name || `${id}.jpg`);
   const ext = extensionOf(filename, file.type);
-  const key = `gallery/photos/${time.year}/${time.month}/${id}.${ext}`;
-  await env.ALBUM_BUCKET.put(key, file.stream(), {
+  const buffer = await file.arrayBuffer();
+  const captured = detectPhotoDate(buffer, filename, time);
+  const key = `gallery/photos/${captured.year}/${captured.month}/${id}.${ext}`;
+  await env.ALBUM_BUCKET.put(key, buffer, {
     httpMetadata: { contentType: file.type || "image/jpeg" },
-    customMetadata: { filename },
+    customMetadata: { filename, capturedDate: captured.date, dateSource: captured.source },
   });
 
   const photos = await readPhotos(env);
@@ -125,13 +128,50 @@ const upload = async (request, env) => {
     key,
     size: file.size,
     type: file.type || "image/jpeg",
-    date: time.date,
+    date: captured.date,
+    dateSource: captured.source,
     uploadedAt: time.datetime,
-    year: time.year,
-    month: time.month,
+    year: captured.year,
+    month: captured.month,
   };
   const saved = await writePhotos(env, [item, ...photos]);
   return ok({ photo: item, count: saved.length });
+};
+
+const reindexDates = async (env) => {
+  const fallbackTime = nowInZone(env.ALBUM_TIMEZONE || "Asia/Shanghai");
+  const photos = await readPhotos(env);
+  let updated = 0;
+  const next = [];
+
+  for (const photo of photos) {
+    let detected = null;
+    if (photo.key) {
+      const object = await env.ALBUM_BUCKET.get(photo.key);
+      if (object) {
+        detected = detectPhotoDate(await object.arrayBuffer(), photo.filename, fallbackTime);
+      }
+    }
+    detected ||= {
+      date: photo.date || fallbackTime.date,
+      year: photo.year || fallbackTime.year,
+      month: photo.month || fallbackTime.month,
+      source: photo.dateSource || "existing",
+    };
+
+    const changed = detected.date !== photo.date || detected.year !== photo.year || detected.month !== photo.month || detected.source !== photo.dateSource;
+    if (changed) updated += 1;
+    next.push({
+      ...photo,
+      date: detected.date,
+      year: detected.year,
+      month: detected.month,
+      dateSource: detected.source,
+    });
+  }
+
+  const saved = await writePhotos(env, next);
+  return ok({ updated, total: saved.length });
 };
 
 const remove = async (request, env) => {
@@ -314,6 +354,7 @@ export async function onRequest(context) {
     if (request.method === "POST" && parts[0] === "security" && parts[1] === "password") return updatePassword(request, env);
     if (request.method === "POST" && parts[0] === "import-legacy") return importLegacy(env);
     if (request.method === "POST" && parts[0] === "upload") return upload(request, env);
+    if (request.method === "POST" && parts[0] === "reindex-dates") return reindexDates(env);
     if (request.method === "POST" && parts[0] === "delete") return remove(request, env);
     if (request.method === "GET" && parts[0] === "export") return exportZip(request, env);
     return request.method === "GET" ? notFound() : methodNotAllowed();

@@ -233,6 +233,15 @@ $("#exportBtn").addEventListener("click", () => {
   toast("ZIP 下载后，请上传百度网盘完成长期备份。");
 });
 
+$("#reindexDatesBtn").addEventListener("click", async () => {
+  if (!confirm("将重新读取照片拍摄日期，并按年月重新整理照片墙。继续吗？")) return;
+  toast("正在重新识别照片日期...");
+  const data = await api("/api/admin/gallery/reindex-dates", { method: "POST" });
+  toast(`日期整理完成：共 ${data.total || 0} 张，更新 ${data.updated || 0} 张。`);
+  state.selected.clear();
+  await load();
+});
+
 $("#deleteBtn").addEventListener("click", async () => {
   const ids = [...state.selected];
   if (!ids.length) return toast("请先选择照片。");

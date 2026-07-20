@@ -1,4 +1,6 @@
 const textDecoder = new TextDecoder("ascii");
+const latinDecoder = new TextDecoder("latin1");
+const quickTimeEpochOffset = 2082844800;
 
 const pad2 = (value) => String(value).padStart(2, "0");
 
@@ -18,6 +20,20 @@ export const datePartsFromDate = (dateText) => {
     date: `${match[1]}-${match[2]}-${match[3]}`,
     year: match[1],
     month: match[2],
+  };
+};
+
+const datePartsFromDateObject = (date, source) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const year = String(date.getUTCFullYear());
+  const month = pad2(date.getUTCMonth() + 1);
+  const day = pad2(date.getUTCDate());
+  if (!isValidDateParts(year, month, day)) return null;
+  return {
+    date: `${year}-${month}-${day}`,
+    year,
+    month,
+    source,
   };
 };
 
@@ -55,6 +71,84 @@ export const datePartsFromFilename = (filename = "") => {
   }
 
   return null;
+};
+
+const datePartsFromEmbeddedText = (arrayBuffer) => {
+  const sampleSize = Math.min(arrayBuffer.byteLength, 2 * 1024 * 1024);
+  const text = latinDecoder.decode(new Uint8Array(arrayBuffer, 0, sampleSize));
+  const iso = text.match(/((?:20)\d{2})[-:](\d{2})[-:](\d{2})[T\s](\d{2}):(\d{2}):(\d{2})/);
+  if (iso && isValidDateParts(iso[1], iso[2], iso[3])) {
+    return {
+      date: `${iso[1]}-${iso[2]}-${iso[3]}`,
+      year: iso[1],
+      month: iso[2],
+      source: "video-metadata",
+    };
+  }
+
+  const compact = text.match(/(?:creationdate|date|time)[\s\S]{0,80}?((?:20)\d{2})(\d{2})(\d{2})/i);
+  if (compact && isValidDateParts(compact[1], compact[2], compact[3])) {
+    return {
+      date: `${compact[1]}-${compact[2]}-${compact[3]}`,
+      year: compact[1],
+      month: compact[2],
+      source: "video-metadata",
+    };
+  }
+
+  return null;
+};
+
+const readUint64 = (view, offset) => {
+  const high = view.getUint32(offset);
+  const low = view.getUint32(offset + 4);
+  return high * 2 ** 32 + low;
+};
+
+const datePartsFromMp4Seconds = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds <= quickTimeEpochOffset) return null;
+  return datePartsFromDateObject(new Date((seconds - quickTimeEpochOffset) * 1000), "video-metadata");
+};
+
+const scanMp4Boxes = (view, start, end, depth = 0) => {
+  if (depth > 6) return null;
+  let offset = start;
+  while (offset + 8 <= end && offset + 8 <= view.byteLength) {
+    let size = view.getUint32(offset);
+    const type = readAscii(view, offset + 4, 4);
+    let header = 8;
+    if (size === 1 && offset + 16 <= view.byteLength) {
+      size = readUint64(view, offset + 8);
+      header = 16;
+    } else if (size === 0) {
+      size = end - offset;
+    }
+    if (!size || size < header || offset + size > end || offset + size > view.byteLength) break;
+
+    if (type === "mvhd" && offset + header + 16 <= view.byteLength) {
+      const version = view.getUint8(offset + header);
+      const creationOffset = offset + header + 4;
+      const seconds = version === 1 && creationOffset + 8 <= view.byteLength ? readUint64(view, creationOffset) : view.getUint32(creationOffset);
+      const parsed = datePartsFromMp4Seconds(seconds);
+      if (parsed) return parsed;
+    }
+
+    if (["moov", "trak", "mdia", "minf", "stbl", "udta", "meta", "ilst"].includes(type)) {
+      const childStart = type === "meta" ? offset + header + 4 : offset + header;
+      const parsed = scanMp4Boxes(view, childStart, offset + size, depth + 1);
+      if (parsed) return parsed;
+    }
+
+    offset += size;
+  }
+  return null;
+};
+
+export const datePartsFromVideoMetadata = (arrayBuffer) => {
+  if (!arrayBuffer || arrayBuffer.byteLength < 16) return null;
+  const embedded = datePartsFromEmbeddedText(arrayBuffer);
+  if (embedded) return embedded;
+  return scanMp4Boxes(new DataView(arrayBuffer), 0, arrayBuffer.byteLength);
 };
 
 const readAscii = (view, start, length) => textDecoder.decode(new Uint8Array(view.buffer, view.byteOffset + start, length)).replace(/\0+$/, "");
@@ -117,5 +211,5 @@ export const detectPhotoDate = (arrayBuffer, filename, fallbackTime) => {
     month: fallbackTime.month,
     source: "upload",
   };
-  return datePartsFromExif(arrayBuffer) || datePartsFromFilename(filename) || fallback;
+  return datePartsFromExif(arrayBuffer) || datePartsFromVideoMetadata(arrayBuffer) || datePartsFromFilename(filename) || fallback;
 };

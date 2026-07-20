@@ -47,16 +47,41 @@ const monthName = (key) => {
   return `${year} 年 ${Number(month)} 月`;
 };
 
-const visiblePhotos = () => (state.month === "all" ? state.photos : state.photos.filter((photo) => monthKey(photo) === state.month));
+const photosInMonth = (key) => state.photos.filter((photo) => monthKey(photo) === key);
+
+const visiblePhotos = () => (state.month === "all" ? [] : photosInMonth(state.month));
 
 const selectedPhotos = () => state.photos.filter((photo) => state.selected.has(photo.id));
 
+const monthFolders = () => {
+  const groups = new Map();
+  for (const photo of state.photos) {
+    const key = monthKey(photo);
+    const folder = groups.get(key) || {
+      key,
+      title: monthName(key),
+      photos: [],
+      videos: 0,
+      images: 0,
+      size: 0,
+      cover: null,
+    };
+    folder.photos.push(photo);
+    folder.size += Number(photo.size || 0);
+    if (isVideo(photo)) folder.videos += 1;
+    else folder.images += 1;
+    if (!folder.cover || (!isVideo(photo) && isVideo(folder.cover))) folder.cover = photo;
+    groups.set(key, folder);
+  }
+  return [...groups.values()].sort((a, b) => b.key.localeCompare(a.key));
+};
+
 const renderMonthFilter = () => {
-  const months = [...new Set(state.photos.map(monthKey))].sort().reverse();
+  const folders = monthFolders();
   const select = $("#monthFilter");
   const current = state.month;
-  select.innerHTML = `<option value="all">全部月份</option>${months.map((key) => `<option value="${key}">${monthName(key)}</option>`).join("")}`;
-  select.value = months.includes(current) ? current : "all";
+  select.innerHTML = `<option value="all">月份文件夹</option>${folders.map((folder) => `<option value="${folder.key}">${folder.title}</option>`).join("")}`;
+  select.value = folders.some((folder) => folder.key === current) ? current : "all";
   state.month = select.value;
 
   const years = [...new Set(state.photos.map((photo) => photo.year).filter(Boolean))].sort().reverse();
@@ -64,10 +89,14 @@ const renderMonthFilter = () => {
 };
 
 const renderSummary = () => {
-  const visible = visiblePhotos();
   const selected = selectedPhotos();
   const selectedSize = selected.reduce((sum, photo) => sum + Number(photo.size || 0), 0);
-  $("#selectionSummary").textContent = `当前显示 ${visible.length} 个，已选择 ${selected.length} 个。`;
+  if (state.month === "all") {
+    $("#selectionSummary").textContent = `共 ${monthFolders().length} 个月份文件夹。`;
+    $("#selectedSize").textContent = `${state.photos.length} 个素材`;
+    return;
+  }
+  $("#selectionSummary").textContent = `当前月 ${visiblePhotos().length} 个素材，已选择 ${selected.length} 个。`;
   $("#selectedSize").textContent = sizeText(selectedSize);
 };
 
@@ -96,8 +125,41 @@ const mediaPreview = (photo) => {
     </span>`;
 };
 
+const folderCover = (folder) => {
+  if (!folder.cover) {
+    return `<span class="folder-empty-cover"><span>暂无封面</span></span>`;
+  }
+  return mediaPreview(folder.cover);
+};
+
+const renderFolders = () => {
+  const folders = monthFolders();
+  $("#adminPhotos").className = "admin-list folder-list";
+  $("#adminPhotos").innerHTML = folders.length
+    ? folders
+        .map(
+          (folder) => `
+            <article class="month-folder" data-month="${folder.key}" tabindex="0" aria-label="进入 ${folder.title}">
+              ${folderCover(folder)}
+              <div class="folder-info">
+                <strong>${folder.title}</strong>
+                <span>${folder.images} 张照片 · ${folder.videos} 个视频</span>
+                <em>${sizeText(folder.size)}</em>
+              </div>
+            </article>`,
+        )
+        .join("")
+    : `<div class="empty glass"><h2>还没有素材</h2><p class="muted">上传照片或视频后，这里会自动按月份生成文件夹。</p></div>`;
+};
+
 const renderPhotos = () => {
+  if (state.month === "all") {
+    renderFolders();
+    return;
+  }
+
   const photos = visiblePhotos();
+  $("#adminPhotos").className = "admin-list";
   $("#adminPhotos").innerHTML = photos.length
     ? photos
         .map((photo) => {
@@ -110,7 +172,7 @@ const renderPhotos = () => {
             </article>`;
         })
         .join("")
-    : `<div class="empty glass"><h2>当前没有素材</h2><p class="muted">可以切换月份，或上传新的照片和视频。</p></div>`;
+    : `<div class="empty glass"><h2>当前月份没有素材</h2><p class="muted">可以返回月份文件夹，或上传新的照片和视频。</p></div>`;
 };
 
 const render = () => {
@@ -185,6 +247,7 @@ const uploadFiles = async (files) => {
   }
   toast("上传完成。");
   $("#fileInput").value = "";
+  state.month = "all";
   await load();
 };
 
@@ -234,15 +297,24 @@ $("#dropZone").addEventListener("drop", (event) => {
 
 $("#monthFilter").addEventListener("change", (event) => {
   state.month = event.target.value;
+  state.selected.clear();
   render();
 });
 
 $("#selectVisible").addEventListener("click", () => {
+  if (state.month === "all") {
+    toast("请先进入一个月份文件夹。");
+    return;
+  }
   visiblePhotos().forEach((photo) => state.selected.add(photo.id));
   render();
 });
 
 $("#invertVisible").addEventListener("click", () => {
+  if (state.month === "all") {
+    toast("请先进入一个月份文件夹。");
+    return;
+  }
   visiblePhotos().forEach((photo) => {
     if (state.selected.has(photo.id)) state.selected.delete(photo.id);
     else state.selected.add(photo.id);
@@ -265,6 +337,14 @@ $("#selectBeforeMonth").addEventListener("click", () => {
 });
 
 $("#adminPhotos").addEventListener("click", (event) => {
+  const folder = event.target.closest("[data-month]");
+  if (folder) {
+    state.month = folder.dataset.month;
+    state.selected.clear();
+    render();
+    return;
+  }
+
   const card = event.target.closest("[data-photo-id]");
   if (!card) return;
   const id = card.dataset.photoId;
@@ -275,7 +355,7 @@ $("#adminPhotos").addEventListener("click", (event) => {
 
 $("#adminPhotos").addEventListener("keydown", (event) => {
   if (event.key !== "Enter" && event.key !== " ") return;
-  const card = event.target.closest("[data-photo-id]");
+  const card = event.target.closest("[data-photo-id], [data-month]");
   if (!card) return;
   event.preventDefault();
   card.click();
@@ -299,7 +379,7 @@ $("#reindexDatesBtn").addEventListener("click", async () => {
 $("#deleteBtn").addEventListener("click", async () => {
   const ids = [...state.selected];
   if (!ids.length) {
-    toast("请先选择素材。");
+    toast("请先进入月份并选择素材。");
     return;
   }
   const size = sizeText(selectedPhotos().reduce((sum, photo) => sum + Number(photo.size || 0), 0));

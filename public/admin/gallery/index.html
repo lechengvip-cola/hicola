@@ -84,33 +84,29 @@
         <section class="panel glass gallery-manager">
           <div class="manager-head">
             <div>
-              <p class="eyebrow">批量管理</p>
+              <p class="eyebrow">按月份管理</p>
               <h2>成长素材库</h2>
             </div>
             <div class="selection-total">
-              <span id="selectionSummary">当前显示 0 个，已选择 0 个。</span>
+              <span id="selectionSummary">按月份文件夹展示。</span>
               <strong id="selectedSize">0 KB</strong>
             </div>
           </div>
 
           <div class="selection-toolbar">
             <select id="monthFilter" class="select-pill" aria-label="按月份筛选"></select>
-            <button id="selectVisible" class="btn" type="button">全选当前</button>
-            <button id="invertVisible" class="btn" type="button">反选当前</button>
+            <button id="selectVisible" class="btn" type="button">全选当前月</button>
+            <button id="invertVisible" class="btn" type="button">反选当前月</button>
             <button id="selectBeforeMonth" class="btn" type="button">选择更早月份</button>
             <button id="clearSelection" class="btn" type="button">清空选择</button>
-            <select id="exportYear" class="select-pill" aria-label="选择导出年份">
-              <option value="">导出全部</option>
-              <option value="2026">导出 2026 年</option>
-              <option value="2025">导出 2025 年</option>
-            </select>
+            <select id="exportYear" class="select-pill" aria-label="选择导出年份"></select>
             <button id="exportBtn" class="btn primary" type="button">导出 ZIP</button>
             <button id="reindexDatesBtn" class="btn" type="button">重新整理日期</button>
             <button id="deleteBtn" class="btn danger" type="button">删除已选</button>
           </div>
 
-          <p class="selection-help">可以按月份筛选后批量选择。删除前请先导出 ZIP，并确认已经备份到百度网盘。</p>
-          <div id="adminPhotos" class="admin-list"></div>
+          <p class="selection-help">默认按月份文件夹展示。点击某个月份后，再批量选择、导出或删除该月素材。</p>
+          <div id="adminPhotos" class="admin-list folder-list"></div>
         </section>
       </section>
     </main>

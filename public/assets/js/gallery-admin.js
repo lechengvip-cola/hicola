@@ -1,6 +1,14 @@
 const $ = (selector) => document.querySelector(selector);
 
-const state = { photos: [], storage: null, selected: new Set(), month: "all" };
+const state = {
+  photos: [],
+  storage: null,
+  selected: new Set(),
+  month: "all",
+};
+
+const mediaExtensions = new Set(["jpg", "jpeg", "png", "webp", "heic", "heif", "mp4", "mov", "webm", "m4v"]);
+const videoExtensions = new Set(["mp4", "mov", "webm", "m4v"]);
 
 const api = async (url, options = {}) => {
   const response = await fetch(url, { credentials: "include", ...options });
@@ -14,9 +22,22 @@ const toast = (text) => {
 };
 
 const sizeText = (bytes = 0) => {
-  if (bytes > 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
-  if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const value = Number(bytes || 0);
+  if (value >= 1024 * 1024 * 1024) return `${(value / 1024 / 1024 / 1024).toFixed(2)} GB`;
+  if (value >= 1024 * 1024) return `${(value / 1024 / 1024).toFixed(2)} MB`;
+  return `${Math.max(1, Math.round(value / 1024))} KB`;
+};
+
+const extensionOf = (name = "") => String(name).split(".").pop()?.toLowerCase() || "";
+
+const isVideo = (item) =>
+  item?.mediaType === "video" ||
+  String(item?.type || "").startsWith("video/") ||
+  videoExtensions.has(extensionOf(item?.filename || ""));
+
+const isAllowedMedia = (file) => {
+  const type = String(file.type || "");
+  return type.startsWith("image/") || type.startsWith("video/") || mediaExtensions.has(extensionOf(file.name || ""));
 };
 
 const monthKey = (photo) => `${photo.year}-${String(photo.month).padStart(2, "0")}`;
@@ -37,43 +58,67 @@ const renderMonthFilter = () => {
   select.innerHTML = `<option value="all">全部月份</option>${months.map((key) => `<option value="${key}">${monthName(key)}</option>`).join("")}`;
   select.value = months.includes(current) ? current : "all";
   state.month = select.value;
+
+  const years = [...new Set(state.photos.map((photo) => photo.year).filter(Boolean))].sort().reverse();
+  $("#exportYear").innerHTML = `<option value="">导出全部</option>${years.map((year) => `<option value="${year}">导出 ${year} 年</option>`).join("")}`;
 };
 
 const renderSummary = () => {
   const visible = visiblePhotos();
   const selected = selectedPhotos();
   const selectedSize = selected.reduce((sum, photo) => sum + Number(photo.size || 0), 0);
-  $("#selectionSummary").textContent = `当前显示 ${visible.length} 张，已选择 ${selected.length} 张。`;
+  $("#selectionSummary").textContent = `当前显示 ${visible.length} 个，已选择 ${selected.length} 个。`;
   $("#selectedSize").textContent = sizeText(selectedSize);
 };
 
-const render = () => {
+const renderCapacity = () => {
   const storage = state.storage || { totalBytes: 0, limitBytes: 10 * 1024 ** 3, status: "normal", message: "容量正常。" };
-  const percent = Math.min(100, Math.round((storage.totalBytes / storage.limitBytes) * 1000) / 10);
-  $("#capacity").className = `panel glass capacity status-${storage.status}`;
+  const percent = Math.min(100, Math.round((Number(storage.totalBytes || 0) / Number(storage.limitBytes || 1)) * 1000) / 10);
+  $("#capacity").className = `panel glass capacity status-${storage.status || "normal"}`;
   $("#capacityText").textContent = `${storage.usedGB || 0} GB / 10 GB`;
   $("#capacityBar").style.width = `${percent}%`;
-  $("#capacityMessage").textContent =
-    storage.status === "normal" ? "状态：正常" : `状态：${storage.status === "warning" ? "提醒" : "危险"}，${storage.message}`;
-  $("#totalPhotos").textContent = state.photos.length;
+  const statusText = storage.status === "danger" ? "危险" : storage.status === "warning" ? "提醒" : "正常";
+  $("#capacityMessage").textContent = `状态：${statusText}。${storage.message || ""}`;
+};
 
-  renderMonthFilter();
-  renderSummary();
+const mediaPreview = (photo) => {
+  if (isVideo(photo)) {
+    return `
+      <span class="admin-video-preview">
+        <video src="${photo.url}" muted preload="metadata" playsinline></video>
+        <span class="media-chip">视频</span>
+      </span>`;
+  }
+  return `
+    <span class="admin-video-preview">
+      <img src="${photo.thumbnail || photo.url}" alt="${photo.filename}" loading="lazy" />
+      <span class="media-chip">照片</span>
+    </span>`;
+};
 
+const renderPhotos = () => {
   const photos = visiblePhotos();
   $("#adminPhotos").innerHTML = photos.length
     ? photos
         .map((photo) => {
           const checked = state.selected.has(photo.id);
           return `
-            <article class="admin-photo ${checked ? "selected" : ""}" data-photo-id="${photo.id}" tabindex="0">
+            <article class="admin-photo ${checked ? "selected" : ""}" data-photo-id="${photo.id}" tabindex="0" aria-label="选择 ${photo.filename}">
               <span class="select-chip">${checked ? "已选择" : "点击选择"}</span>
-              <img src="${photo.thumbnail || photo.url}" alt="${photo.filename}" loading="lazy" />
+              ${mediaPreview(photo)}
               <p>${photo.date} · ${sizeText(photo.size)}<br />${photo.filename}</p>
             </article>`;
         })
         .join("")
-    : `<div class="empty glass"><h2>当前筛选没有照片</h2><p class="muted">可以切换月份或上传新照片。</p></div>`;
+    : `<div class="empty glass"><h2>当前没有素材</h2><p class="muted">可以切换月份，或上传新的照片和视频。</p></div>`;
+};
+
+const render = () => {
+  $("#totalPhotos").textContent = state.photos.length;
+  renderCapacity();
+  renderMonthFilter();
+  renderSummary();
+  renderPhotos();
 };
 
 const loadSecurity = async () => {
@@ -81,7 +126,7 @@ const loadSecurity = async () => {
   const security = data.security || {};
   $("#securityStatus").textContent = security.passwordCustomized
     ? `已启用自定义后台密码。上次修改：${security.passwordUpdatedAt || "未知"}。${security.lockPolicy || ""}`
-    : `当前使用初始环境密码。建议在这里设置一个新的后台密码。${security.lockPolicy || ""}`;
+    : `当前使用初始环境密码。建议在这里设置新的后台密码。${security.lockPolicy || ""}`;
 };
 
 const load = async () => {
@@ -103,7 +148,7 @@ const checkAuth = async () => {
   if (data.authenticated) await showApp();
 };
 
-$("#loginBtn").addEventListener("click", async () => {
+const login = async () => {
   try {
     $("#loginError").textContent = "";
     await api("/api/admin/gallery/auth/login", {
@@ -116,26 +161,53 @@ $("#loginBtn").addEventListener("click", async () => {
   } catch (err) {
     $("#loginError").textContent = err.message || "登录失败";
   }
-});
+};
 
+const uploadFiles = async (files) => {
+  const media = [...files].filter(isAllowedMedia);
+  const skipped = files.length - media.length;
+  if (!media.length) {
+    toast("请选择照片或视频文件。");
+    return;
+  }
+
+  toast(`准备上传 ${media.length} 个素材${skipped ? `，已忽略 ${skipped} 个不支持文件` : ""}。`);
+  let done = 0;
+  for (const file of media) {
+    const form = new FormData();
+    form.append("file", file);
+    await fetch("/api/admin/gallery/upload", { method: "POST", credentials: "include", body: form }).then(async (response) => {
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.message || `${file.name} 上传失败`);
+    });
+    done += 1;
+    toast(`已上传 ${done} / ${media.length}`);
+  }
+  toast("上传完成。");
+  $("#fileInput").value = "";
+  await load();
+};
+
+$("#loginBtn").addEventListener("click", login);
 $("#adminPassword").addEventListener("keydown", (event) => {
-  if (event.key === "Enter") $("#loginBtn").click();
+  if (event.key === "Enter") login();
 });
 
 $("#changePasswordBtn").addEventListener("click", async () => {
-  const currentPassword = $("#currentPassword").value;
-  const newPassword = $("#newAdminPassword").value;
-  const confirmPassword = $("#confirmAdminPassword").value;
   try {
     await api("/api/admin/gallery/security/password", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+      body: JSON.stringify({
+        currentPassword: $("#currentPassword").value,
+        newPassword: $("#newAdminPassword").value,
+        confirmPassword: $("#confirmAdminPassword").value,
+      }),
     });
     $("#currentPassword").value = "";
     $("#newAdminPassword").value = "";
     $("#confirmAdminPassword").value = "";
-    toast("后台密码已修改，当前设备已自动换成新会话。");
+    toast("后台密码已修改。");
     await loadSecurity();
   } catch (err) {
     toast(err.message || "修改密码失败");
@@ -146,26 +218,6 @@ $("#adminLogoutBtn").addEventListener("click", async () => {
   await api("/api/admin/gallery/auth/logout", { method: "POST" }).catch(() => {});
   location.reload();
 });
-
-const uploadFiles = async (files) => {
-  const images = [...files].filter((file) => file.type.startsWith("image/"));
-  if (!images.length) return;
-  toast(`准备上传 ${images.length} 张照片...`);
-  let done = 0;
-  for (const file of images) {
-    const form = new FormData();
-    form.append("file", file);
-    await fetch("/api/admin/gallery/upload", { method: "POST", credentials: "include", body: form }).then(async (response) => {
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.ok === false) throw new Error(data.message || "上传失败");
-    });
-    done += 1;
-    toast(`已上传 ${done} / ${images.length}`);
-  }
-  toast("上传完成。");
-  $("#fileInput").value = "";
-  await load();
-};
 
 $("#fileInput").addEventListener("change", (event) => uploadFiles(event.target.files).catch((err) => toast(err.message)));
 $("#pickFiles").addEventListener("click", () => $("#fileInput").click());
@@ -204,7 +256,10 @@ $("#clearSelection").addEventListener("click", () => {
 });
 
 $("#selectBeforeMonth").addEventListener("click", () => {
-  if (state.month === "all") return toast("请先选择一个月份，再选择更早月份。");
+  if (state.month === "all") {
+    toast("请先选择一个月份，再选择更早月份。");
+    return;
+  }
   state.photos.filter((photo) => monthKey(photo) < state.month).forEach((photo) => state.selected.add(photo.id));
   render();
 });
@@ -228,33 +283,34 @@ $("#adminPhotos").addEventListener("keydown", (event) => {
 
 $("#exportBtn").addEventListener("click", () => {
   const year = $("#exportYear").value;
-  const url = `/api/admin/gallery/export${year ? `?year=${encodeURIComponent(year)}` : ""}`;
-  window.location.href = url;
+  window.location.href = `/api/admin/gallery/export${year ? `?year=${encodeURIComponent(year)}` : ""}`;
   toast("ZIP 下载后，请上传百度网盘完成长期备份。");
 });
 
 $("#reindexDatesBtn").addEventListener("click", async () => {
-  if (!confirm("将重新读取照片拍摄日期，并按年月重新整理照片墙。继续吗？")) return;
-  toast("正在重新识别照片日期...");
+  if (!confirm("将重新读取素材日期，并按年份和月份重新整理。继续吗？")) return;
+  toast("正在重新识别素材日期...");
   const data = await api("/api/admin/gallery/reindex-dates", { method: "POST" });
-  toast(`日期整理完成：共 ${data.total || 0} 张，更新 ${data.updated || 0} 张。`);
+  toast(`日期整理完成：共 ${data.total || 0} 个，更新 ${data.updated || 0} 个。`);
   state.selected.clear();
   await load();
 });
 
 $("#deleteBtn").addEventListener("click", async () => {
   const ids = [...state.selected];
-  if (!ids.length) return toast("请先选择照片。");
-  const count = ids.length;
+  if (!ids.length) {
+    toast("请先选择素材。");
+    return;
+  }
   const size = sizeText(selectedPhotos().reduce((sum, photo) => sum + Number(photo.size || 0), 0));
-  if (!confirm(`将删除 ${count} 张照片，合计约 ${size}。\n\n请确认照片已经备份到百度网盘。确认后将从 R2 删除。`)) return;
+  if (!confirm(`将删除 ${ids.length} 个素材，合计约 ${size}。\n\n请确认素材已经备份到百度网盘。确认后将从 R2 删除。`)) return;
   await api("/api/admin/gallery/delete", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ ids, confirmBackup: true }),
   });
   state.selected.clear();
-  toast("已删除选中照片。");
+  toast("已删除选中素材。");
   await load();
 });
 

@@ -9,7 +9,7 @@
   <body>
     <main class="page">
       <header class="topbar">
-        <a class="btn" href="/admin/gallery/">上传照片</a>
+        <a class="btn" href="/admin/gallery/">上传照片和视频</a>
         <a class="btn" href="/">返回首页</a>
       </header>
       <section class="hero glass">
@@ -19,7 +19,7 @@
           <p class="lead">记录成长中的每一个精彩瞬间。</p>
         </div>
         <div class="stat">
-          <span>照片数量</span>
+          <span>素材数量</span>
           <strong id="photoCount">0</strong>
         </div>
       </section>
@@ -28,7 +28,8 @@
     </main>
     <div id="lightbox" class="lightbox">
       <button id="closeLightbox" class="btn close" type="button">关闭</button>
-      <img id="lightboxImage" alt="" />
+      <img id="lightboxImage" alt="" hidden />
+      <video id="lightboxVideo" controls playsinline hidden></video>
     </div>
     <script src="/assets/js/gallery.js" type="module"></script>
   </body>

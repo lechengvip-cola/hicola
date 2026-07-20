@@ -13,7 +13,7 @@ import {
   verifyGalleryPassword,
 } from "../../../_lib/gallery/security.js";
 import { detectPhotoDate } from "../../../_lib/gallery/dates.js";
-import { extensionOf, listStorage, nowInZone, photoUrl, readPhotos, safeName, writePhotos } from "../../../_lib/gallery/store.js";
+import { contentTypeOf, extensionOf, listStorage, mediaTypeFromFile, nowInZone, photoUrl, readPhotos, safeName, writePhotos } from "../../../_lib/gallery/store.js";
 
 const partsOf = (context) => context.params.path || [];
 
@@ -104,19 +104,21 @@ const importLegacy = async (env) => {
 const upload = async (request, env) => {
   const form = await request.formData();
   const file = form.get("file");
-  if (!file || typeof file === "string") return error("NO_FILE", "请选择照片。", 400);
-  if (!String(file.type || "").startsWith("image/")) return error("BAD_FILE", "仅支持图片文件。", 400);
-
+  if (!file || typeof file === "string") return error("NO_FILE", "请选择照片或视频。", 400);
+  const mime = String(file.type || "");
   const time = nowInZone(env.ALBUM_TIMEZONE || "Asia/Shanghai");
   const id = crypto.randomUUID();
   const filename = safeName(file.name || `${id}.jpg`);
   const ext = extensionOf(filename, file.type);
+  const mediaType = mediaTypeFromFile(filename, mime);
+  if (!mediaType) return error("BAD_FILE", "仅支持图片或视频文件。", 400);
+  const contentType = contentTypeOf(mediaType, ext, mime);
   const buffer = await file.arrayBuffer();
   const captured = detectPhotoDate(buffer, filename, time);
-  const key = `gallery/photos/${captured.year}/${captured.month}/${id}.${ext}`;
+  const key = `gallery/${mediaType === "video" ? "videos" : "photos"}/${captured.year}/${captured.month}/${id}.${ext}`;
   await env.ALBUM_BUCKET.put(key, buffer, {
-    httpMetadata: { contentType: file.type || "image/jpeg" },
-    customMetadata: { filename, capturedDate: captured.date, dateSource: captured.source },
+    httpMetadata: { contentType },
+    customMetadata: { filename, mediaType, capturedDate: captured.date, dateSource: captured.source },
   });
 
   const photos = await readPhotos(env);
@@ -127,7 +129,8 @@ const upload = async (request, env) => {
     thumbnail: photoUrl(id),
     key,
     size: file.size,
-    type: file.type || "image/jpeg",
+    type: contentType,
+    mediaType,
     date: captured.date,
     dateSource: captured.source,
     uploadedAt: time.datetime,

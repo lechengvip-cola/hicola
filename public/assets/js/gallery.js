@@ -124,6 +124,7 @@ const renderPhotos = () => {
     .map(
       (item) => `
         <button class="photo-card" type="button" data-full="${item.url}" data-kind="${isVideo(item) ? "video" : "image"}" aria-label="查看${item.filename || "素材"}">
+          <span class="quick-delete" data-delete-id="${item.id}" data-delete-name="${item.filename || "素材"}">删除</span>
           ${mediaPreview(item)}
           <span class="photo-meta">
             <strong>${monthText(item)}</strong>
@@ -165,7 +166,36 @@ const load = async () => {
   renderPhotos();
 };
 
+const deleteItem = async (button) => {
+  const id = button.dataset.deleteId;
+  const name = button.dataset.deleteName || "这个素材";
+  const confirmed = window.confirm(`确定删除「${name}」吗？\n\n请先确认它已经备份到百度网盘。`);
+  if (!confirmed) return;
+
+  try {
+    await api("/api/admin/gallery/delete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ids: [id], confirmBackup: true }),
+    });
+    state.photos = state.photos.filter((item) => item.id !== id);
+    renderFilters();
+    renderPhotos();
+  } catch (error) {
+    const goAdmin = window.confirm("删除需要先登录相册后台。\n\n现在进入后台登录吗？");
+    if (goAdmin) window.location.href = "/admin/gallery/";
+  }
+};
+
 document.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-id]");
+  if (deleteButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    deleteItem(deleteButton);
+    return;
+  }
+
   const chip = event.target.closest("[data-filter]");
   if (chip) {
     state.active = chip.dataset.filter;

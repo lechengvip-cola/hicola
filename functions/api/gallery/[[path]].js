@@ -6,7 +6,15 @@ const partsOf = (context) => context.params.path || [];
 const list = async (env) => {
   if (!env.ALBUM_BUCKET) return error("R2_NOT_ENABLED", "照片存储暂未启用。", 503);
   const photos = await readPhotos(env);
-  return ok({ photos, count: photos.length });
+  return ok(
+    { photos, count: photos.length },
+    {
+      headers: {
+        "cache-control": "public, max-age=60, s-maxage=120",
+        "x-content-type-options": "nosniff",
+      },
+    },
+  );
 };
 
 const photo = async (env, id) => {
@@ -18,7 +26,7 @@ const photo = async (env, id) => {
   if (!object) return notFound();
   const headers = new Headers();
   headers.set("content-type", item.type || "image/jpeg");
-  headers.set("cache-control", "public, max-age=86400");
+  headers.set("cache-control", "public, max-age=86400, s-maxage=604800");
   headers.set("x-content-type-options", "nosniff");
   return new Response(object.body, { headers });
 };
@@ -34,4 +42,3 @@ export async function onRequest(context) {
     return error("GALLERY_ERROR", "成长照片库暂时不可用。", 500);
   }
 }
-

@@ -23,10 +23,6 @@ export default () =>
         algorithm: "gzip",
         ext: ".gz",
       }),
-      viteCompression({
-        algorithm: "brotliCompress",
-        ext: ".br",
-      }),
     ],
     server: {
       port: "3000",
@@ -51,23 +47,9 @@ export default () =>
     },
     build: {
       minify: "terser",
-      cssCodeSplit: true,
-      assetsInlineLimit: 4096,
-      chunkSizeWarningLimit: 1200,
       terserOptions: {
         compress: {
           pure_funcs: ["console.log"],
-        },
-      },
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (!id.includes("node_modules")) return undefined;
-            if (id.includes("element-plus")) return "vendor-element";
-            if (id.includes("aplayer") || id.includes("@worstone")) return "vendor-player";
-            if (id.includes("vue") || id.includes("pinia")) return "vendor-vue";
-            return "vendor";
-          },
         },
       },
     },

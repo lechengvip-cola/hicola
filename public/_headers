@@ -4,13 +4,13 @@
   X-Frame-Options: SAMEORIGIN
 
 /assets/index-*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=600
 
 /assets/vendor-*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=600
 
 /assets/*.css
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=600
 
 /assets/js/gallery.js
   Cache-Control: public, max-age=600

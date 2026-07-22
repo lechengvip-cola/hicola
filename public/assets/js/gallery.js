@@ -77,10 +77,14 @@ const renderFilters = () => {
 
   $("#filters").innerHTML = `
     <div class="album-filter">
+      <div class="filter-heading">
+        <span>资料库</span>
+        <strong>成长相册</strong>
+      </div>
       <div class="filter-primary">
         <button class="all-months ${state.active === "months" ? "active" : ""}" data-filter="months" type="button">
           <span>全部月份</span>
-          <strong>${monthGroups().length}</strong>
+          <em>${monthGroups().length}</em>
         </button>
         <label class="year-select">
           <span>年份</span>
@@ -95,7 +99,7 @@ const renderFilters = () => {
             (group) => `
               <button class="month-pill ${state.active === group.label ? "active" : ""}" data-filter="${group.label}" type="button">
                 <span>${Number(group.key.slice(5))} 月</span>
-                <em>${group.items.length}</em>
+                <strong>${group.items.length} 个素材</strong>
               </button>`,
           )
           .join("")}
@@ -104,11 +108,17 @@ const renderFilters = () => {
   `;
 };
 
+const renderViewTitle = () => {
+  const title = $("#galleryViewTitle");
+  if (title) title.textContent = state.active === "months" ? "全部月份" : state.active;
+};
+
 const renderMonthFolders = () => {
   const list = $("#photoWall");
   const groups = monthGroups();
   list.className = "month-wall";
   $("#photoCount").textContent = state.photos.length;
+  renderViewTitle();
 
   if (!groups.length) {
     list.innerHTML = `<div class="empty glass"><h2>还没有成长素材</h2><p class="muted">在后台上传照片或视频后，这里会按月份自动整理。</p></div>`;
@@ -140,6 +150,7 @@ const renderPhotos = () => {
   const photos = state.photos.filter((item) => monthText(item) === state.active);
   list.className = "masonry";
   $("#photoCount").textContent = photos.length;
+  renderViewTitle();
 
   if (!photos.length) {
     list.innerHTML = `<div class="empty glass"><h2>这个月份还没有素材</h2><p class="muted">可以返回全部月份查看其它相册。</p></div>`;

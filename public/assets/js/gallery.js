@@ -3,6 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   photos: [],
   active: "months",
+  year: "",
 };
 
 const videoExtensions = new Set(["mp4", "mov", "webm", "m4v"]);
@@ -22,9 +23,7 @@ const isVideo = (item) =>
   videoExtensions.has(extensionOf(item?.filename || ""));
 
 const monthText = (item) => `${item.year} 年 ${Number(item.month)} 月`;
-
 const monthKey = (item) => `${item.year}-${String(Number(item.month)).padStart(2, "0")}`;
-
 const sizeText = (bytes = 0) => `${Math.max(1, Math.round(Number(bytes || 0) / 1024))} KB`;
 
 const mediaPreview = (item) => {
@@ -38,6 +37,8 @@ const mediaPreview = (item) => {
   return `<img src="${item.thumbnail || item.url}" alt="${item.filename || ""}" loading="lazy" />`;
 };
 
+const years = () => [...new Set(state.photos.map((item) => String(item.year)).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+
 const monthGroups = () => {
   const groups = new Map();
 
@@ -46,6 +47,7 @@ const monthGroups = () => {
     if (!groups.has(key)) {
       groups.set(key, {
         key,
+        year: String(item.year),
         label: monthText(item),
         items: [],
       });
@@ -65,16 +67,31 @@ const monthGroups = () => {
     .sort((a, b) => b.key.localeCompare(a.key));
 };
 
+const currentYearGroups = () => monthGroups().filter((group) => !state.year || group.year === state.year);
+
 const renderFilters = () => {
-  const groups = monthGroups();
+  const yearOptions = years();
+  if (!state.year && yearOptions.length) state.year = yearOptions[0];
+  const groups = currentYearGroups();
+
   $("#filters").innerHTML = `
-    <button class="chip ${state.active === "months" ? "active" : ""}" data-filter="months">全部月份</button>
-    ${groups
-      .map(
-        (group) =>
-          `<button class="chip ${state.active === group.label ? "active" : ""}" data-filter="${group.label}">${group.label}</button>`,
-      )
-      .join("")}
+    <div class="filter-shell">
+      <button class="chip ${state.active === "months" ? "active" : ""}" data-filter="months">全部月份</button>
+      <label class="year-picker">
+        <span>年份</span>
+        <select id="galleryYearFilter" aria-label="选择年份">
+          ${yearOptions.map((year) => `<option value="${year}" ${state.year === year ? "selected" : ""}>${year} 年</option>`).join("")}
+        </select>
+      </label>
+      <div class="month-strip" aria-label="选择月份">
+        ${groups
+          .map(
+            (group) =>
+              `<button class="chip ${state.active === group.label ? "active" : ""}" data-filter="${group.label}">${Number(group.key.slice(5))} 月</button>`,
+          )
+          .join("")}
+      </div>
+    </div>
   `;
 };
 
@@ -186,6 +203,14 @@ const deleteItem = async (button) => {
     if (goAdmin) window.location.href = "/admin/gallery/";
   }
 };
+
+document.addEventListener("change", (event) => {
+  if (event.target.id !== "galleryYearFilter") return;
+  state.year = event.target.value;
+  state.active = "months";
+  renderFilters();
+  renderPhotos();
+});
 
 document.addEventListener("click", (event) => {
   const deleteButton = event.target.closest("[data-delete-id]");

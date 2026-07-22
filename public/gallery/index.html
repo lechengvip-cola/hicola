@@ -6,7 +6,7 @@
     <title>可乐成长相册</title>
     <link rel="stylesheet" href="/assets/css/gallery.css" />
   </head>
-  <body>
+  <body class="gallery-page">
     <main class="page">
       <header class="topbar">
         <a class="btn" href="/admin/gallery/">上传照片和视频</a>
@@ -14,16 +14,28 @@
       </header>
       <section class="hero glass gallery-hero">
         <div>
-          <h1>成长相册</h1>
-          <p class="lead">按月份收藏照片和视频，记录成长里的每一次闪光。</p>
+          <p class="eyebrow">成长资料库</p>
+          <h1>可乐成长相册</h1>
+          <p class="lead">按年月整理照片和视频，像翻开一本持续更新的成长档案。</p>
         </div>
         <div class="stat">
           <span>照片与视频</span>
           <strong id="photoCount">0</strong>
         </div>
       </section>
-      <nav id="filters" class="toolbar glass" aria-label="按月份筛选"></nav>
-      <section id="photoWall" class="month-wall"></section>
+      <section class="gallery-board glass">
+        <nav id="filters" class="toolbar" aria-label="按月份筛选"></nav>
+        <section class="gallery-content">
+          <div class="gallery-content-head">
+            <div>
+              <span>相册视图</span>
+              <strong id="galleryViewTitle">全部月份</strong>
+            </div>
+            <p>点击月份封面进入照片墙</p>
+          </div>
+          <section id="photoWall" class="month-wall"></section>
+        </section>
+      </section>
     </main>
     <div id="lightbox" class="lightbox">
       <button id="closeLightbox" class="btn close" type="button">关闭</button>

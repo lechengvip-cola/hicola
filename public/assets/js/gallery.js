@@ -31,13 +31,14 @@ const mediaPreview = (item) => {
     return `
       <span class="video-preview">
         <video src="${item.url}" muted preload="metadata" playsinline></video>
-        <span class="play-badge">播放</span>
+        <span class="play-badge">视频</span>
       </span>`;
   }
   return `<img src="${item.thumbnail || item.url}" alt="${item.filename || ""}" loading="lazy" />`;
 };
 
-const years = () => [...new Set(state.photos.map((item) => String(item.year)).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+const years = () =>
+  [...new Set(state.photos.map((item) => String(item.year)).filter(Boolean))].sort((a, b) => b.localeCompare(a));
 
 const monthGroups = () => {
   const groups = new Map();
@@ -75,19 +76,27 @@ const renderFilters = () => {
   const groups = currentYearGroups();
 
   $("#filters").innerHTML = `
-    <div class="filter-shell">
-      <button class="chip ${state.active === "months" ? "active" : ""}" data-filter="months">全部月份</button>
-      <label class="year-picker">
-        <span>年份</span>
-        <select id="galleryYearFilter" aria-label="选择年份">
-          ${yearOptions.map((year) => `<option value="${year}" ${state.year === year ? "selected" : ""}>${year} 年</option>`).join("")}
-        </select>
-      </label>
-      <div class="month-strip" aria-label="选择月份">
+    <div class="album-filter">
+      <div class="filter-primary">
+        <button class="all-months ${state.active === "months" ? "active" : ""}" data-filter="months" type="button">
+          <span>全部月份</span>
+          <strong>${monthGroups().length}</strong>
+        </button>
+        <label class="year-select">
+          <span>年份</span>
+          <select id="galleryYearFilter" aria-label="选择年份">
+            ${yearOptions.map((year) => `<option value="${year}" ${state.year === year ? "selected" : ""}>${year}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+      <div class="month-rail" aria-label="选择月份">
         ${groups
           .map(
-            (group) =>
-              `<button class="chip ${state.active === group.label ? "active" : ""}" data-filter="${group.label}">${Number(group.key.slice(5))} 月</button>`,
+            (group) => `
+              <button class="month-pill ${state.active === group.label ? "active" : ""}" data-filter="${group.label}" type="button">
+                <span>${Number(group.key.slice(5))} 月</span>
+                <em>${group.items.length}</em>
+              </button>`,
           )
           .join("")}
       </div>
@@ -112,7 +121,7 @@ const renderMonthFolders = () => {
         <button class="month-card" type="button" data-month="${group.label}" aria-label="打开${group.label}">
           <span class="month-cover">${mediaPreview(group.cover)}</span>
           <span class="month-info">
-            <span class="month-tag">月份相册</span>
+            <span class="month-tag">月份</span>
             <strong>${group.label}</strong>
             <span>${group.photoCount} 张照片${group.videoCount ? ` · ${group.videoCount} 个视频` : ""}</span>
           </span>

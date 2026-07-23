@@ -3,7 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   photos: [],
   active: "months",
-  year: "",
+  year: "all",
 };
 
 const videoExtensions = new Set(["mp4", "mov", "webm", "m4v"]);
@@ -68,60 +68,61 @@ const monthGroups = () => {
     .sort((a, b) => b.key.localeCompare(a.key));
 };
 
-const currentYearGroups = () => monthGroups().filter((group) => !state.year || group.year === state.year);
+const visibleGroups = () =>
+  monthGroups().filter((group) => state.year === "all" || group.year === state.year);
 
 const renderFilters = () => {
   const yearOptions = years();
-  if (!state.year && yearOptions.length) state.year = yearOptions[0];
-  const groups = currentYearGroups();
+  const groups = visibleGroups();
+  const allGroups = monthGroups();
+  const photoCount = state.photos.filter((item) => !isVideo(item)).length;
+  const videoCount = state.photos.filter(isVideo).length;
 
   $("#filters").innerHTML = `
-    <div class="album-filter">
-      <div class="filter-heading">
-        <span>资料库</span>
-        <strong>成长相册</strong>
+    <div class="gallery-filter-top">
+      <button class="view-chip ${state.active === "months" ? "active" : ""}" data-filter="months" type="button">
+        全部月份 <span>${allGroups.length}</span>
+      </button>
+      <label class="premium-select">
+        <span>年份</span>
+        <select id="galleryYearFilter" aria-label="选择年份">
+          <option value="all" ${state.year === "all" ? "selected" : ""}>全部年份</option>
+          ${yearOptions.map((year) => `<option value="${year}" ${state.year === year ? "selected" : ""}>${year} 年</option>`).join("")}
+        </select>
+      </label>
+      <div class="library-counts">
+        <span>${photoCount} 张照片</span>
+        ${videoCount ? `<span>${videoCount} 个视频</span>` : ""}
       </div>
-      <div class="filter-primary">
-        <button class="all-months ${state.active === "months" ? "active" : ""}" data-filter="months" type="button">
-          <span>全部月份</span>
-          <em>${monthGroups().length}</em>
-        </button>
-        <label class="year-select">
-          <span>年份</span>
-          <select id="galleryYearFilter" aria-label="选择年份">
-            ${yearOptions.map((year) => `<option value="${year}" ${state.year === year ? "selected" : ""}>${year}</option>`).join("")}
-          </select>
-        </label>
-      </div>
-      <div class="month-rail" aria-label="选择月份">
-        ${groups
-          .map(
-            (group) => `
-              <button class="month-pill ${state.active === group.label ? "active" : ""}" data-filter="${group.label}" type="button">
-                <span>${Number(group.key.slice(5))} 月</span>
-                <strong>${group.items.length} 个素材</strong>
-              </button>`,
-          )
-          .join("")}
-      </div>
+    </div>
+    <div class="month-rail" aria-label="选择月份">
+      ${groups
+        .map(
+          (group) => `
+            <button class="month-pill ${state.active === group.label ? "active" : ""}" data-filter="${group.label}" type="button">
+              <span>${Number(group.key.slice(5))} 月</span>
+              <strong>${group.items.length} 个素材</strong>
+            </button>`,
+        )
+        .join("")}
     </div>
   `;
 };
 
 const renderViewTitle = () => {
   const title = $("#galleryViewTitle");
-  if (title) title.textContent = state.active === "months" ? "全部月份" : state.active;
+  if (title) title.textContent = state.active === "months" ? "月份相册" : state.active;
 };
 
 const renderMonthFolders = () => {
   const list = $("#photoWall");
-  const groups = monthGroups();
+  const groups = visibleGroups();
   list.className = "month-wall";
   $("#photoCount").textContent = state.photos.length;
   renderViewTitle();
 
   if (!groups.length) {
-    list.innerHTML = `<div class="empty glass"><h2>还没有成长素材</h2><p class="muted">在后台上传照片或视频后，这里会按月份自动整理。</p></div>`;
+    list.innerHTML = `<div class="empty glass"><h2>还没有成长素材</h2><p class="muted">上传照片或视频后，这里会按月份自动整理。</p></div>`;
     return;
   }
 
@@ -153,7 +154,7 @@ const renderPhotos = () => {
   renderViewTitle();
 
   if (!photos.length) {
-    list.innerHTML = `<div class="empty glass"><h2>这个月份还没有素材</h2><p class="muted">可以返回全部月份查看其它相册。</p></div>`;
+    list.innerHTML = `<div class="empty glass"><h2>这个月份还没有素材</h2><p class="muted">可以返回月份相册查看其它月份。</p></div>`;
     return;
   }
 
